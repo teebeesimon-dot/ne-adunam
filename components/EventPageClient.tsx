@@ -52,7 +52,7 @@ export default function EventPageClient({ id }: EventPageClientProps) {
   if (!loaded) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-zinc-500">Se încarcă...</p>
+        <p className="text-muted-foreground">Se încarcă...</p>
       </div>
     );
   }
@@ -60,13 +60,13 @@ export default function EventPageClient({ id }: EventPageClientProps) {
   if (!event) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900">Eveniment negăsit</h1>
-        <p className="mt-2 text-zinc-500">
+        <h1 className="text-2xl font-bold text-foreground">Eveniment negăsit</h1>
+        <p className="mt-2 text-muted-foreground">
           Acest eveniment nu există sau a fost șters.
         </p>
         <Link
           href="/"
-          className="mt-6 inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="mt-6 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
         >
           Înapoi acasă
         </Link>
@@ -78,80 +78,80 @@ export default function EventPageClient({ id }: EventPageClientProps) {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
       <Link
         href="/"
-        className="mb-6 inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
+        className="mb-6 inline-flex items-center text-sm font-medium text-primary transition hover:text-primary-hover"
       >
         ← Înapoi
       </Link>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">
+          <h1 className="text-2xl font-extrabold tracking-tight text-card-foreground sm:text-3xl">
             {event.title}
           </h1>
-          <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
             {SPORT_LABELS[event.sport] ?? event.sport}
           </span>
         </div>
 
         <dl className="mt-6 space-y-4">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Sport
             </dt>
-            <dd className="mt-1 text-zinc-900">
+            <dd className="mt-1 text-card-foreground">
               {SPORT_LABELS[event.sport] ?? event.sport}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Data
             </dt>
-            <dd className="mt-1 text-zinc-900">{formatEventDate(event.date)}</dd>
+            <dd className="mt-1 text-card-foreground">{formatEventDate(event.date)}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Ora
             </dt>
-            <dd className="mt-1 text-zinc-900">{event.time}</dd>
+            <dd className="mt-1 text-card-foreground">{event.time}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Locație
             </dt>
-            <dd className="mt-1 text-zinc-900">
+            <dd className="mt-1 text-card-foreground">
               {getEventLocationName(event)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Participanți maximi
             </dt>
-            <dd className="mt-1 text-zinc-900">{event.maxParticipants}</dd>
+            <dd className="mt-1 text-card-foreground">{event.maxParticipants}</dd>
           </div>
         </dl>
 
-        <div className="mt-6 border-t border-zinc-100 pt-6">
+        <div className="mt-6 border-t border-border pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <ShareOnWhatsAppButton event={event} className="w-full sm:w-auto" />
             <OpenInGoogleMapsButton event={event} className="w-full sm:w-auto" />
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 active:scale-[0.98] sm:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-card-foreground transition hover:bg-muted active:scale-[0.98] sm:w-auto"
             >
               Copy Event Link
             </button>
             {user?.uid === event.ownerId && (
               <Link
                 href={`/event/${event.id}/edit`}
-                className="inline-flex w-full items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 active:scale-[0.98] sm:w-auto"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20 active:scale-[0.98] sm:w-auto"
               >
                 Edit Event
               </Link>
             )}
           </div>
           {copied && (
-            <p className="mt-3 text-sm font-medium text-emerald-600">
+            <p className="mt-3 text-sm font-medium text-primary">
               Link copied to clipboard!
             </p>
           )}

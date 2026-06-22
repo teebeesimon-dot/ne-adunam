@@ -50,8 +50,8 @@ export default function AdminPanel() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-        <p className="text-zinc-500">Loading users...</p>
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <p className="text-muted-foreground">Loading users...</p>
       </div>
     );
   }
@@ -59,20 +59,20 @@ export default function AdminPanel() {
   return (
     <div>
       {error && (
-        <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50">
+            <thead className="border-b border-border bg-muted">
               <tr>
-                <th className="px-4 py-3 font-semibold text-zinc-700">Name</th>
-                <th className="px-4 py-3 font-semibold text-zinc-700">Email</th>
-                <th className="px-4 py-3 font-semibold text-zinc-700">Role</th>
-                <th className="px-4 py-3 font-semibold text-zinc-700">Actions</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Name</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Email</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Role</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -81,19 +81,19 @@ export default function AdminPanel() {
                 const isSuperAdminUser = profile.role === "super_admin";
 
                 return (
-                  <tr key={profile.uid} className="border-b border-zinc-100">
-                    <td className="px-4 py-3 font-medium text-zinc-900">
+                  <tr key={profile.uid} className="border-b border-border">
+                    <td className="px-4 py-3 font-medium text-card-foreground">
                       {profile.displayName || "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600">{profile.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{profile.email}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                         {ROLE_LABELS[profile.role]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       {isSuperAdminUser || isCurrentUser ? (
-                        <span className="text-xs text-zinc-400">No actions</span>
+                        <span className="text-xs text-muted-foreground">No actions</span>
                       ) : profile.role === "user" ? (
                         <button
                           type="button"
@@ -101,7 +101,7 @@ export default function AdminPanel() {
                           onClick={() =>
                             handleRoleChange(profile.uid, "organizer")
                           }
-                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
                         >
                           Promote to Organizer
                         </button>
@@ -110,7 +110,7 @@ export default function AdminPanel() {
                           type="button"
                           disabled={updatingUid === profile.uid}
                           onClick={() => handleRoleChange(profile.uid, "user")}
-                          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60"
+                          className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-60"
                         >
                           Demote to User
                         </button>

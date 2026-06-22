@@ -35,13 +35,13 @@ function ParticipantAvatar({
       <img
         src={photoURL}
         alt=""
-        className="h-9 w-9 shrink-0 rounded-full border border-zinc-200 object-cover"
+        className="h-9 w-9 shrink-0 rounded-full border border-border object-cover"
       />
     );
   }
 
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm font-semibold text-zinc-600">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm font-semibold text-muted-foreground">
       {name.charAt(0).toUpperCase()}
     </div>
   );
@@ -58,23 +58,23 @@ function TeamCard({
 }) {
   return (
     <div className={`rounded-2xl border p-4 ${className}`}>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-700">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {title} ({players.length})
       </h3>
       {players.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">No players assigned.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No players assigned.</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {players.map((player) => (
             <li
               key={player.userId}
-              className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg bg-card/70 px-3 py-2"
             >
               <ParticipantAvatar
                 name={player.name}
                 photoURL={player.photoURL}
               />
-              <span className="text-sm font-medium text-zinc-800">
+              <span className="text-sm font-medium text-foreground">
                 {player.name}
               </span>
             </li>
@@ -177,13 +177,13 @@ export default function TeamGenerator({
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold text-zinc-900">Teams</h2>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Teams</h2>
         {isOwner && (
           <button
             type="button"
             onClick={handleGenerateTeams}
             disabled={generating || confirmed.length < 2}
-            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {generating
               ? "Generating..."
@@ -195,13 +195,13 @@ export default function TeamGenerator({
       </div>
 
       {isOwner && confirmed.length < 2 && (
-        <p className="mb-4 text-sm text-zinc-500">
+        <p className="mb-4 text-sm text-muted-foreground">
           At least 2 confirmed players are needed to generate teams.
         </p>
       )}
 
       {error && (
-        <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -211,18 +211,18 @@ export default function TeamGenerator({
           <TeamCard
             title="Team A"
             players={teams.teamA}
-            className="border-blue-200 bg-blue-50"
+            className="border-primary/30 bg-primary/5"
           />
           <TeamCard
             title="Team B"
             players={teams.teamB}
-            className="border-violet-200 bg-violet-50"
+            className="border-accent/40 bg-accent/10"
           />
         </div>
       ) : (
         isOwner && (
-          <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-            <p className="text-zinc-500">
+          <div className="rounded-2xl border border-dashed border-border bg-muted p-8 text-center">
+            <p className="text-muted-foreground">
               Generate random teams from confirmed players.
             </p>
           </div>

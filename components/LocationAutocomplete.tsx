@@ -115,15 +115,15 @@ export default function LocationAutocomplete({
         autoComplete="off"
       />
       {!isReady && !loadError && (
-        <p className="mt-1.5 text-xs text-zinc-500">Loading location search...</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Loading location search...</p>
       )}
       {loadError && (
-        <p className="mt-1.5 text-xs text-amber-700">
+        <p className="mt-1.5 text-xs text-destructive">
           Google Maps unavailable. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.
         </p>
       )}
       {isReady && !value && inputValue.trim() && (
-        <p className="mt-1.5 text-xs text-zinc-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Select a location from the suggestions.
         </p>
       )}

@@ -142,7 +142,7 @@ export default function CreateEventForm() {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -150,7 +150,7 @@ export default function CreateEventForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "Se salvează..." : "Creează eveniment"}
       </button>

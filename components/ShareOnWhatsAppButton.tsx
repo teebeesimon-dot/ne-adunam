@@ -22,7 +22,7 @@ export default function ShareOnWhatsAppButton({
   if (!shareUrl) {
     return (
       <span
-        className={`inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-400 sm:w-auto ${className}`}
+        className={`inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground sm:w-auto ${className}`}
       >
         Share on WhatsApp
       </span>

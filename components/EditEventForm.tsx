@@ -163,7 +163,7 @@ export default function EditEventForm({ event }: EditEventFormProps) {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -172,14 +172,14 @@ export default function EditEventForm({ event }: EditEventFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
+          className="w-full rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
         >
           {submitting ? "Se salvează..." : "Salvează modificările"}
         </button>
         <button
           type="button"
           onClick={() => router.push(`/event/${event.id}`)}
-          className="w-full rounded-xl border border-zinc-300 px-6 py-3.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 sm:flex-1"
+          className="w-full rounded-xl border border-border px-6 py-3.5 text-sm font-semibold text-foreground transition hover:bg-muted sm:flex-1"
         >
           Anulează
         </button>

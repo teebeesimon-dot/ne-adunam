@@ -8,7 +8,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
   const { id } = await params;
 
   return (
-    <div className="min-h-full bg-zinc-50">
+    <div className="min-h-full bg-background">
       <EditEventPageClient id={id} />
     </div>
   );

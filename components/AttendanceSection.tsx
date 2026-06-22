@@ -25,19 +25,22 @@ const MAYBE_CONFIG = {
   status: "poate" as const,
   label: "Poate",
   groupTitle: "Maybe",
-  buttonClass: "bg-amber-500 hover:bg-amber-600 text-white",
-  listClass: "border-amber-200 bg-amber-50",
+  buttonClass: "bg-accent hover:bg-accent/90 text-accent-foreground",
+  listClass:
+    "border-accent/30 bg-accent/10 dark:border-accent/30 dark:bg-accent/10",
 };
 
 const NOT_GOING_CONFIG = {
   status: "nu_vin" as const,
   label: "Nu vin",
   groupTitle: "Not Going",
-  buttonClass: "bg-zinc-600 hover:bg-zinc-700 text-white",
-  listClass: "border-zinc-200 bg-zinc-50",
+  buttonClass:
+    "bg-muted-foreground/80 hover:bg-muted-foreground text-background",
+  listClass: "border-border bg-muted",
 };
 
-const VIN_BUTTON_CLASS = "bg-emerald-600 hover:bg-emerald-700 text-white";
+const VIN_BUTTON_CLASS =
+  "bg-primary hover:bg-primary-hover text-primary-foreground";
 
 function getParticipantName(data: Record<string, unknown>): string {
   return (data.userName as string) || (data.name as string) || "Unknown";
@@ -66,13 +69,13 @@ function ParticipantAvatar({
       <img
         src={photoURL}
         alt=""
-        className="h-9 w-9 shrink-0 rounded-full border border-zinc-200 object-cover"
+        className="h-9 w-9 shrink-0 rounded-full border border-border object-cover"
       />
     );
   }
 
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm font-semibold text-zinc-600">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm font-semibold text-muted-foreground">
       {name.charAt(0).toUpperCase()}
     </div>
   );
@@ -91,26 +94,26 @@ function RankedParticipantList({
 }) {
   return (
     <div className={`rounded-2xl border p-4 ${className}`}>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-700">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h3>
       {participants.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">{emptyMessage}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {participants.map((participant) => (
             <li
               key={participant.userId}
-              className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg bg-card/70 px-3 py-2"
             >
-              <span className="w-8 shrink-0 text-xs font-bold text-emerald-700">
+              <span className="w-8 shrink-0 text-xs font-bold text-primary">
                 {participant.positionLabel}
               </span>
               <ParticipantAvatar
                 name={participant.name}
                 photoURL={participant.photoURL}
               />
-              <span className="text-sm font-medium text-zinc-800">
+              <span className="text-sm font-medium text-foreground">
                 {participant.name}
               </span>
             </li>
@@ -134,23 +137,23 @@ function SimpleParticipantList({
 }) {
   return (
     <div className={`rounded-2xl border p-4 ${className}`}>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-700">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {title} ({count})
       </h3>
       {participants.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">No one yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No one yet.</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {participants.map((participant) => (
             <li
               key={participant.userId}
-              className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg bg-card/70 px-3 py-2"
             >
               <ParticipantAvatar
                 name={participant.name}
                 photoURL={participant.photoURL}
               />
-              <span className="text-sm font-medium text-zinc-800">
+              <span className="text-sm font-medium text-foreground">
                 {participant.name}
               </span>
             </li>
@@ -258,8 +261,8 @@ export default function AttendanceSection({
   if (authLoading) {
     return (
       <section className="mt-8">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-          <p className="text-zinc-500">Se încarcă...</p>
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <p className="text-muted-foreground">Se încarcă...</p>
         </div>
       </section>
     );
@@ -268,15 +271,15 @@ export default function AttendanceSection({
   if (!user) {
     return (
       <section className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold text-zinc-900">Prezență</h2>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-zinc-600">
+        <h2 className="mb-4 text-xl font-bold tracking-tight text-foreground">Prezență</h2>
+        <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <p className="text-muted-foreground">
             Sign in with Google to confirm your attendance.
           </p>
           <button
             type="button"
             onClick={signInWithGoogle}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
           >
             Sign in with Google
           </button>
@@ -287,25 +290,25 @@ export default function AttendanceSection({
 
   return (
     <section className="mt-8">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-900">Prezență</h2>
+      <h2 className="mb-4 text-xl font-bold tracking-tight text-foreground">Prezență</h2>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-3">
           <ParticipantAvatar
             name={user.displayName ?? "User"}
             photoURL={user.photoURL}
           />
           <div>
-            <p className="font-medium text-zinc-900">{user.displayName}</p>
+            <p className="font-medium text-card-foreground">{user.displayName}</p>
             {currentStatus === "vin" && userPosition && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 {userPosition.isWaitlisted
                   ? `Waiting list: ${userPosition.positionLabel}`
                   : `Confirmed: ${userPosition.positionLabel}`}
               </p>
             )}
             {currentStatus && currentStatus !== "vin" && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Your response:{" "}
                 {currentStatus === "poate" ? "Maybe" : "Not Going"}
               </p>
@@ -320,7 +323,7 @@ export default function AttendanceSection({
             onClick={() => handleResponse("vin")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "vin"
-                ? "ring-2 ring-offset-2 ring-emerald-500 " + VIN_BUTTON_CLASS
+                ? "ring-2 ring-offset-2 ring-offset-card ring-ring " + VIN_BUTTON_CLASS
                 : VIN_BUTTON_CLASS
             }`}
           >
@@ -332,7 +335,7 @@ export default function AttendanceSection({
             onClick={() => handleResponse("poate")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "poate"
-                ? "ring-2 ring-offset-2 ring-emerald-500 " + MAYBE_CONFIG.buttonClass
+                ? "ring-2 ring-offset-2 ring-offset-card ring-ring " + MAYBE_CONFIG.buttonClass
                 : MAYBE_CONFIG.buttonClass
             }`}
           >
@@ -344,7 +347,7 @@ export default function AttendanceSection({
             onClick={() => handleResponse("nu_vin")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "nu_vin"
-                ? "ring-2 ring-offset-2 ring-emerald-500 " + NOT_GOING_CONFIG.buttonClass
+                ? "ring-2 ring-offset-2 ring-offset-card ring-ring " + NOT_GOING_CONFIG.buttonClass
                 : NOT_GOING_CONFIG.buttonClass
             }`}
           >
@@ -357,13 +360,13 @@ export default function AttendanceSection({
         <RankedParticipantList
           title={`Going (${confirmed.length}/${maxParticipants})`}
           participants={confirmed}
-          className="border-emerald-200 bg-emerald-50"
+          className="border-primary/30 bg-primary/5"
           emptyMessage="No confirmed players yet."
         />
         <RankedParticipantList
           title={`Waiting List (${waitlist.length})`}
           participants={waitlist}
-          className="border-orange-200 bg-orange-50"
+          className="border-accent/30 bg-accent/5"
           emptyMessage="No one on the waiting list."
         />
         <SimpleParticipantList

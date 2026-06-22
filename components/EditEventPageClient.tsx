@@ -40,7 +40,7 @@ export default function EditEventPageClient({ id }: EditEventPageClientProps) {
   if (!loaded || authLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-zinc-500">Se încarcă...</p>
+        <p className="text-muted-foreground">Se încarcă...</p>
       </div>
     );
   }
@@ -48,10 +48,10 @@ export default function EditEventPageClient({ id }: EditEventPageClientProps) {
   if (!event) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900">Eveniment negăsit</h1>
+        <h1 className="text-2xl font-bold text-foreground">Eveniment negăsit</h1>
         <Link
           href="/"
-          className="mt-6 inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="mt-6 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
         >
           Înapoi acasă
         </Link>
@@ -62,13 +62,13 @@ export default function EditEventPageClient({ id }: EditEventPageClientProps) {
   if (!user || user.uid !== event.ownerId) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900">Acces interzis</h1>
-        <p className="mt-2 text-zinc-500">
+        <h1 className="text-2xl font-bold text-foreground">Acces interzis</h1>
+        <p className="mt-2 text-muted-foreground">
           Doar organizatorul poate edita acest eveniment.
         </p>
         <Link
           href={`/event/${event.id}`}
-          className="mt-6 inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="mt-6 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
         >
           Înapoi la eveniment
         </Link>
@@ -80,13 +80,13 @@ export default function EditEventPageClient({ id }: EditEventPageClientProps) {
     <div className="mx-auto max-w-lg px-4 py-8 sm:py-12">
       <Link
         href={`/event/${event.id}`}
-        className="mb-6 inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
+        className="mb-6 inline-flex items-center text-sm font-medium text-primary transition hover:text-primary-hover"
       >
         ← Înapoi
       </Link>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900 sm:text-3xl">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+        <h1 className="mb-6 text-2xl font-extrabold tracking-tight text-card-foreground sm:text-3xl">
           Edit Event
         </h1>
         <EditEventForm event={event} />

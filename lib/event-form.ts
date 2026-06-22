@@ -7,6 +7,7 @@ export const SPORTS: { value: Sport; label: string }[] = [
 ];
 
 export const inputClassName =
-  "w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20";
+  "w-full rounded-xl border border-input bg-card px-4 py-3 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/25";
 
-export const labelClassName = "mb-1.5 block text-sm font-medium text-zinc-700";
+export const labelClassName =
+  "mb-1.5 block text-sm font-medium text-muted-foreground";

@@ -26,7 +26,7 @@ export default function OpenInGoogleMapsButton({
       href={mapsUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 active:scale-[0.98] ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-card-foreground transition hover:bg-muted active:scale-[0.98] ${className}`}
     >
       Open in Google Maps
     </a>

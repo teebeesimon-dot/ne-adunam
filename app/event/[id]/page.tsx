@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function EventPage({ params }: EventPageProps) {
   const { id } = await params;
   return (
-    <div className="min-h-full bg-zinc-50">
+    <div className="min-h-full bg-background">
       <EventPageClient id={id} />
     </div>
   );
