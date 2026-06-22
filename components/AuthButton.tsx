@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthProvider";
 import { ROLE_LABELS } from "@/lib/roles";
+import { LogoMark } from "@/components/Logo";
 
 export default function AuthButton() {
   const { user, profile, loading, isSuperAdmin, signInWithGoogle, signOutUser } =
@@ -10,7 +11,7 @@ export default function AuthButton() {
 
   if (loading) {
     return (
-      <div className="h-10 w-28 animate-pulse rounded-xl bg-zinc-200" />
+      <div className="h-10 w-28 animate-pulse rounded-xl bg-muted" />
     );
   }
 
@@ -19,7 +20,7 @@ export default function AuthButton() {
       <button
         type="button"
         onClick={signInWithGoogle}
-        className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50"
+        className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-card-foreground transition hover:bg-muted"
       >
         <GoogleIcon />
         Sign in with Google
@@ -32,7 +33,7 @@ export default function AuthButton() {
       {isSuperAdmin && (
         <Link
           href="/admin"
-          className="hidden rounded-xl border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 sm:inline-flex"
+          className="hidden rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex"
         >
           Admin
         </Link>
@@ -42,13 +43,13 @@ export default function AuthButton() {
         <img
           src={user.photoURL}
           alt=""
-          className="h-9 w-9 rounded-full border border-zinc-200"
+          className="h-9 w-9 rounded-full border border-border"
         />
       )}
-      <span className="hidden text-sm font-medium text-zinc-700 sm:inline">
+      <span className="hidden text-sm font-medium text-foreground sm:inline">
         {user.displayName}
         {profile && (
-          <span className="ml-2 text-xs text-zinc-500">
+          <span className="ml-2 text-xs text-muted-foreground">
             ({ROLE_LABELS[profile.role]})
           </span>
         )}
@@ -56,7 +57,7 @@ export default function AuthButton() {
       <button
         type="button"
         onClick={signOutUser}
-        className="rounded-xl border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+        className="rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
       >
         Sign out
       </button>
@@ -89,9 +90,13 @@ function GoogleIcon() {
 
 export function AppHeader() {
   return (
-    <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-lg font-bold text-zinc-900">
+    <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-foreground"
+        >
+          <LogoMark className="h-9 w-9" />
           Ne Adunam
         </Link>
         <AuthButton />

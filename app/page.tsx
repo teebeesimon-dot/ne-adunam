@@ -11,22 +11,31 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="min-h-full bg-zinc-50">
+    <div className="min-h-full bg-background">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
-        <header className="mb-10 text-center sm:text-left">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
-            Ne Adunam
+        <header className="mb-12 text-center sm:text-left">
+          <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            Hai pe teren
+          </span>
+          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-balance text-foreground sm:text-6xl">
+            Adună echipa,{" "}
+            <span className="text-primary">intră în joc</span>
           </h1>
-          <p className="mt-3 text-lg text-zinc-600">
-            Organizează evenimente sportive și distribuie linkul direct echipei.
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            Organizează evenimente sportive, confirmă prezența și distribuie
+            linkul direct echipei — totul într-un singur loc.
           </p>
           <HomeActions />
         </header>
 
         <section>
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900">
-            Evenimentele mele
-          </h2>
+          <div className="mb-5 flex items-center gap-3">
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
+              Evenimentele mele
+            </h2>
+            <span className="h-px flex-1 bg-border" />
+          </div>
           <EventList />
         </section>
       </div>

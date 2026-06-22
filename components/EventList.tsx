@@ -54,22 +54,22 @@ export default function EventList() {
 
   if (authLoading || loading) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-        <p className="text-zinc-500">Se încarcă evenimentele...</p>
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <p className="text-muted-foreground">Se încarcă evenimentele...</p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-        <p className="text-zinc-500">
+      <div className="rounded-2xl border border-dashed border-border bg-muted p-8 text-center">
+        <p className="text-muted-foreground">
           Sign in with Google to see your events.
         </p>
         <button
           type="button"
           onClick={signInWithGoogle}
-          className="mt-4 inline-flex rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          className="mt-4 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
         >
           Sign in with Google
         </button>
@@ -79,9 +79,9 @@ export default function EventList() {
 
   if (events.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-        <p className="text-zinc-500">Nu ai evenimente create.</p>
-        <p className="mt-1 text-sm text-zinc-400">
+      <div className="rounded-2xl border border-dashed border-border bg-muted p-8 text-center">
+        <p className="font-medium text-foreground">Nu ai evenimente create.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Creează un eveniment și distribuie linkul direct participanților.
         </p>
       </div>

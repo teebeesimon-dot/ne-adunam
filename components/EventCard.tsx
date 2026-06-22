@@ -21,16 +21,19 @@ export default function EventCard({ event }: EventCardProps) {
   return (
     <Link
       href={`/event/${event.id}`}
-      className="block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+      className="group relative block overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
     >
+      <span className="absolute inset-y-0 left-0 w-1 bg-primary opacity-0 transition group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold text-zinc-900">{event.title}</h3>
-        <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+        <h3 className="text-lg font-bold tracking-tight text-card-foreground">
+          {event.title}
+        </h3>
+        <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
           {SPORT_LABELS[event.sport] ?? event.sport}
         </span>
       </div>
 
-      <div className="mt-3 space-y-1 text-sm text-zinc-600">
+      <div className="mt-3 space-y-1 text-sm text-muted-foreground">
         <p>
           {formatDate(event.date)}
           {event.time ? ` · ${event.time}` : ""}
@@ -38,7 +41,7 @@ export default function EventCard({ event }: EventCardProps) {
         <p>{getEventLocationName(event)}</p>
       </div>
 
-      <p className="mt-3 text-sm font-medium text-emerald-600">
+      <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
         Max {event.maxParticipants} participanți
       </p>
     </Link>
