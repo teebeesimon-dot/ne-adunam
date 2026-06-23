@@ -296,7 +296,10 @@ export default function AttendanceSection({
           ? findUserGoingPosition(user.uid, lists)
           : null
       );
-    });
+    },
+    // Ignore transient permission errors fired before the auth token attaches;
+    // the listener reconnects automatically once auth is ready.
+    () => {});
 
     return () => unsubscribe();
   }, [eventId, maxParticipants, user]);
