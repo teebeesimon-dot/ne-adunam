@@ -9,11 +9,18 @@
 
 import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? "");
+// Prefer an explicit file (SERVICE_ACCOUNT_FILE) over the env var, so we can
+// run with a freshly provided key even if the env var lags behind.
+const rawKey = process.env.SERVICE_ACCOUNT_FILE
+  ? readFileSync(process.env.SERVICE_ACCOUNT_FILE, "utf8")
+  : (process.env.FIREBASE_SERVICE_ACCOUNT ?? "");
+
+const sa = JSON.parse(rawKey || "{}");
 if (!sa.private_key) {
-  console.error("FIREBASE_SERVICE_ACCOUNT is missing or invalid");
+  console.error("Service account is missing or invalid");
   process.exit(1);
 }
 
