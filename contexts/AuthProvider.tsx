@@ -50,17 +50,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+    // Safety net: never let the UI hang on an unresolved auth state
+    // (e.g. iOS Safari blocking storage). Show the signed-out UI after a delay.
+    const timeout = setTimeout(() => setLoading(false), 6000);
+
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      // Resolve the loading state immediately based on auth, so the UI is
+      // never blocked by a slow/stalled Firestore profile write.
+      clearTimeout(timeout);
+      setUser(nextUser);
+      setLoading(false);
+
       if (nextUser) {
-        await saveUserProfile(nextUser);
+        // Ensure the user document exists, but don't block the UI on it.
+        // The profile itself is loaded reactively via the onSnapshot effect.
+        saveUserProfile(nextUser).catch((error) => {
+          console.error("[v0] saveUserProfile error:", error);
+        });
       } else {
         setProfile(null);
       }
-      setUser(nextUser);
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
