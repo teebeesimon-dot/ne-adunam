@@ -33,7 +33,7 @@ export default function AuthButton() {
       {isSuperAdmin && (
         <Link
           href="/admin"
-          className="hidden rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground sm:inline-flex"
+          className="inline-flex rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
         >
           Admin
         </Link>
