@@ -34,6 +34,9 @@ export function mapFirestoreEvent(
     longitude: (data.longitude as number) ?? undefined,
     maxParticipants: (data.maxParticipants as number) ?? 0,
     ownerId: (data.ownerId as string) ?? "",
+    seriesId: (data.seriesId as string) ?? undefined,
+    seriesIndex: (data.seriesIndex as number) ?? undefined,
+    seriesTotal: (data.seriesTotal as number) ?? undefined,
     teams: mapFirestoreTeams(data.teams),
     participants: (data.participants as Event["participants"]) ?? [],
   };
@@ -45,6 +48,15 @@ export function formatEventDate(date: string): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatEventDateShort(date: string): string {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("ro-RO", {
+    day: "numeric",
+    month: "short",
     year: "numeric",
   });
 }

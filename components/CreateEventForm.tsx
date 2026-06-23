@@ -1,11 +1,18 @@
 "use client";
 
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  Timestamp,
+  writeBatch,
+} from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 import { useAuth } from "@/contexts/AuthProvider";
 import { inputClassName, labelClassName, SPORTS } from "@/lib/event-form";
+import { formatEventDateShort } from "@/lib/events";
 import { db } from "@/lib/firebase";
 import type { EventLocation } from "@/lib/location";
 import { toFirestoreLocation } from "@/lib/location";
@@ -16,6 +23,11 @@ import {
   formatLei,
   formatTimeRange,
 } from "@/lib/pricing";
+import {
+  generateOccurrenceDates,
+  RECURRENCE_OPTIONS,
+  type RecurrenceFrequency,
+} from "@/lib/recurrence";
 import type { Sport } from "@/lib/types";
 
 export default function CreateEventForm() {
@@ -31,11 +43,19 @@ export default function CreateEventForm() {
   const [pricePerHour, setPricePerHour] = useState("");
   const [location, setLocation] = useState<EventLocation | null>(null);
   const [maxParticipants, setMaxParticipants] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("weekly");
+  const [endDate, setEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const priceValue = Number(pricePerHour);
   const totalCost = computeTotalCost(priceValue, durationMinutes);
+
+  const occurrenceDates =
+    isRecurring && date && endDate
+      ? generateOccurrenceDates(date, endDate, frequency)
+      : [];
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,22 +66,52 @@ export default function CreateEventForm() {
       return;
     }
 
+    if (isRecurring && occurrenceDates.length === 0) {
+      setError(
+        "Alege o dată de sfârșit validă (după data de început) pentru seria recurentă."
+      );
+      return;
+    }
+
     setError("");
     setSubmitting(true);
 
+    const baseData = {
+      title: title.trim(),
+      sport,
+      time,
+      durationMinutes,
+      ...(priceValue > 0 ? { pricePerHour: priceValue } : {}),
+      maxParticipants: Number(maxParticipants),
+      ownerId: user.uid,
+      createdAt: Timestamp.now(),
+      ...toFirestoreLocation(location),
+    };
+
     try {
-      await addDoc(collection(db, "events"), {
-        title: title.trim(),
-        sport,
-        date,
-        time,
-        durationMinutes,
-        ...(priceValue > 0 ? { pricePerHour: priceValue } : {}),
-        maxParticipants: Number(maxParticipants),
-        ownerId: user.uid,
-        createdAt: Timestamp.now(),
-        ...toFirestoreLocation(location),
-      });
+      if (isRecurring && occurrenceDates.length > 1) {
+        // Generate one event document per occurrence, linked by a shared seriesId.
+        const seriesId = doc(collection(db, "events")).id;
+        const batch = writeBatch(db);
+
+        occurrenceDates.forEach((occurrenceDate, index) => {
+          const ref = doc(collection(db, "events"));
+          batch.set(ref, {
+            ...baseData,
+            date: occurrenceDate,
+            seriesId,
+            seriesIndex: index,
+            seriesTotal: occurrenceDates.length,
+          });
+        });
+
+        await batch.commit();
+      } else {
+        await addDoc(collection(db, "events"), {
+          ...baseData,
+          date,
+        });
+      }
 
       router.push("/");
     } catch {
@@ -109,7 +159,7 @@ export default function CreateEventForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="date" className={labelClassName}>
-            Data
+            {isRecurring ? "Data de început" : "Data"}
           </label>
           <input
             id="date"
@@ -209,6 +259,85 @@ export default function CreateEventForm() {
           className={inputClassName}
           placeholder="10"
         />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-muted/30 p-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-primary"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-foreground">
+              Se repetă
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Generează automat câte un eveniment pentru fiecare apariție, până
+              la data de sfârșit.
+            </span>
+          </span>
+        </label>
+
+        {isRecurring && (
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="frequency" className={labelClassName}>
+                  Frecvență
+                </label>
+                <select
+                  id="frequency"
+                  value={frequency}
+                  onChange={(e) =>
+                    setFrequency(e.target.value as RecurrenceFrequency)
+                  }
+                  className={inputClassName}
+                >
+                  {RECURRENCE_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="endDate" className={labelClassName}>
+                  Data de sfârșit
+                </label>
+                <input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  min={date || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={inputClassName}
+                />
+              </div>
+            </div>
+
+            {date && endDate && (
+              <p className="text-sm text-muted-foreground">
+                {occurrenceDates.length > 0 ? (
+                  <>
+                    Se vor crea{" "}
+                    <span className="font-semibold text-foreground">
+                      {occurrenceDates.length} evenimente
+                    </span>
+                    , între {formatEventDateShort(occurrenceDates[0])} și{" "}
+                    {formatEventDateShort(
+                      occurrenceDates[occurrenceDates.length - 1]
+                    )}
+                    .
+                  </>
+                ) : (
+                  "Data de sfârșit trebuie să fie după data de început."
+                )}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {error && (

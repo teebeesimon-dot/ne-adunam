@@ -74,6 +74,9 @@ export interface Event {
   longitude?: number;
   maxParticipants: number;
   ownerId: string;
+  seriesId?: string;
+  seriesIndex?: number;
+  seriesTotal?: number;
   teams?: GeneratedTeams | null;
   participants?: Participant[];
   createdAt?: string;

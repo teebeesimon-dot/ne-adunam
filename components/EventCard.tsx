@@ -33,6 +33,12 @@ export default function EventCard({ event }: EventCardProps) {
         </span>
       </div>
 
+      {event.seriesId && event.seriesTotal ? (
+        <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+          Recurent · joc {(event.seriesIndex ?? 0) + 1} din {event.seriesTotal}
+        </span>
+      ) : null}
+
       <div className="mt-3 space-y-1 text-sm text-muted-foreground">
         <p>
           {formatDate(event.date)}
