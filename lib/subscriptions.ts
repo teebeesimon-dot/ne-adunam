@@ -75,12 +75,17 @@ export function subscribeToMonthSubscriptions(
     where("month", "==", month)
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const map: SubscriptionMap = {};
-    snapshot.docs.forEach((docSnap) => {
-      const userId = docSnap.data().userId as string | undefined;
-      if (userId) map[userId] = true;
-    });
-    onChange(map);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const map: SubscriptionMap = {};
+      snapshot.docs.forEach((docSnap) => {
+        const userId = docSnap.data().userId as string | undefined;
+        if (userId) map[userId] = true;
+      });
+      onChange(map);
+    },
+    // Swallow transient errors (e.g. permission-denied before auth attaches).
+    () => onChange({})
+  );
 }

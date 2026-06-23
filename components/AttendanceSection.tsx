@@ -213,23 +213,30 @@ export default function AttendanceSection({
 
   const monthKey = eventDate ? monthKeyFromDate(eventDate) : "";
 
-  // Live payment status from the event document.
+  // Live payment status from the event document. Gated on auth so the snapshot
+  // listener doesn't fire before the Firebase token is attached (which would
+  // produce a transient permission-denied on cold load).
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "events", eventId), (snap) => {
-      const data = snap.data();
-      setPayments(
-        (data?.payments as Record<string, "paid" | "unpaid">) ?? {}
-      );
-    });
+    if (!user) return;
+    const unsubscribe = onSnapshot(
+      doc(db, "events", eventId),
+      (snap) => {
+        const data = snap.data();
+        setPayments(
+          (data?.payments as Record<string, "paid" | "unpaid">) ?? {}
+        );
+      },
+      () => setPayments({})
+    );
     return () => unsubscribe();
-  }, [eventId]);
+  }, [eventId, user]);
 
   // Live monthly subscriptions for the event's month.
   useEffect(() => {
-    if (!monthKey) return;
+    if (!user || !monthKey) return;
     const unsubscribe = subscribeToMonthSubscriptions(monthKey, setSubscriptions);
     return () => unsubscribe();
-  }, [monthKey]);
+  }, [monthKey, user]);
 
   useEffect(() => {
     const q = query(

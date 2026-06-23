@@ -171,7 +171,12 @@ service cloud.firestore {
       allow get, list: if isAuthenticated();
 
       // Only organizers / super admins manage subscriptions.
-      allow create: if isAuthenticated();
+      allow create: if canCreateEvents()
+        && request.resource.data.createdBy == request.auth.uid
+        && subscriptionId == request.resource.data.userId + '_' + request.resource.data.month
+        && request.resource.data.keys().hasAll([
+          'userId', 'month', 'createdBy', 'createdAt'
+        ]);
 
       allow delete: if canCreateEvents();
 
