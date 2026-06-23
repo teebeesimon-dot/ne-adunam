@@ -1,40 +1,30 @@
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 export type PaymentStatus = "unpaid" | "paid";
 
-/** Returns the YYYY-MM month key for a given ISO date string (YYYY-MM-DD). */
-export function getMonthKey(isoDate: string): string {
-  return (isoDate || "").slice(0, 7);
-}
+export type PaymentMap = Record<string, PaymentStatus>;
 
-/** Human-readable Romanian month label, e.g. "iunie 2026". */
-export function formatMonthLabel(isoDate: string): string {
-  const month = getMonthKey(isoDate);
-  if (!month) return "";
-  const date = new Date(`${month}-01T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("ro-RO", {
-    month: "long",
-    year: "numeric",
-  });
+/** Whether a given user has been marked as paid for an event. */
+export function isPaid(payments: PaymentMap, userId: string): boolean {
+  return payments[userId] === "paid";
 }
 
 /**
- * How a confirmed player's cost is covered for a given event.
- * - "subscription": covered by a monthly subscription
- * - "paid": marked paid by the organizer for this event
- * - "unpaid": still owes the per-player amount
+ * Persist a player's payment status on the event document's `payments` map.
+ * Removing the entry (unpaid) keeps the map clean.
  */
-export type CoverageStatus = PaymentStatus | "subscription";
-
-export function resolveCoverage(
-  hasSubscription: boolean,
-  paymentStatus: PaymentStatus | undefined
-): CoverageStatus {
-  if (hasSubscription) return "subscription";
-  return paymentStatus === "paid" ? "paid" : "unpaid";
+export async function setPaymentStatus(
+  eventId: string,
+  currentPayments: PaymentMap,
+  userId: string,
+  paid: boolean
+): Promise<void> {
+  const next: PaymentMap = { ...currentPayments };
+  if (paid) {
+    next[userId] = "paid";
+  } else {
+    delete next[userId];
+  }
+  await updateDoc(doc(db, "events", eventId), { payments: next });
 }
-
-export const COVERAGE_LABEL: Record<CoverageStatus, string> = {
-  paid: "Plătit",
-  unpaid: "Neplătit",
-  subscription: "Abonament",
-};

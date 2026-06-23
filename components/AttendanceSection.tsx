@@ -1,6 +1,12 @@
 "use client";
 
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { db } from "@/lib/firebase";
@@ -14,7 +20,18 @@ import {
   computeTotalCost,
   formatLei,
 } from "@/lib/pricing";
+import {
+  isPaid,
+  setPaymentStatus,
+} from "@/lib/payments";
 import { saveResponse } from "@/lib/responses";
+import {
+  monthKeyFromDate,
+  monthLabel,
+  setSubscription,
+  subscribeToMonthSubscriptions,
+  type SubscriptionMap,
+} from "@/lib/subscriptions";
 import type {
   AttendanceStatus,
   ParticipantEntry,
@@ -26,6 +43,9 @@ interface AttendanceSectionProps {
   maxParticipants: number;
   pricePerHour?: number;
   durationMinutes?: number;
+  ownerId?: string;
+  eventDate?: string;
+  canManage?: boolean;
 }
 
 const MAYBE_CONFIG = {
@@ -176,6 +196,9 @@ export default function AttendanceSection({
   maxParticipants,
   pricePerHour,
   durationMinutes,
+  ownerId,
+  eventDate,
+  canManage = false,
 }: AttendanceSectionProps) {
   const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [confirmed, setConfirmed] = useState<RankedParticipantEntry[]>([]);
@@ -185,6 +208,28 @@ export default function AttendanceSection({
   const [currentStatus, setCurrentStatus] = useState<AttendanceStatus | null>(null);
   const [userPosition, setUserPosition] = useState<RankedParticipantEntry | null>(null);
   const [submitting, setSubmitting] = useState<AttendanceStatus | null>(null);
+  const [payments, setPayments] = useState<Record<string, "paid" | "unpaid">>({});
+  const [subscriptions, setSubscriptions] = useState<SubscriptionMap>({});
+
+  const monthKey = eventDate ? monthKeyFromDate(eventDate) : "";
+
+  // Live payment status from the event document.
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "events", eventId), (snap) => {
+      const data = snap.data();
+      setPayments(
+        (data?.payments as Record<string, "paid" | "unpaid">) ?? {}
+      );
+    });
+    return () => unsubscribe();
+  }, [eventId]);
+
+  // Live monthly subscriptions for the event's month.
+  useEffect(() => {
+    if (!monthKey) return;
+    const unsubscribe = subscribeToMonthSubscriptions(monthKey, setSubscriptions);
+    return () => unsubscribe();
+  }, [monthKey]);
 
   useEffect(() => {
     const q = query(
@@ -250,7 +295,28 @@ export default function AttendanceSection({
   }, [eventId, maxParticipants, user]);
 
   const totalCost = computeTotalCost(pricePerHour, durationMinutes);
-  const perPlayer = computePerPlayer(totalCost, confirmed.length);
+  // Subscribed players are covered by their monthly subscription and excluded
+  // from the per-game split; the cost is divided among the remaining payers.
+  const payers = confirmed.filter((p) => !subscriptions[p.userId]);
+  const perPlayer = computePerPlayer(totalCost, payers.length);
+  const paidCount = payers.filter((p) => isPaid(payments, p.userId)).length;
+  const collected = perPlayer * paidCount;
+
+  async function handleTogglePaid(userId: string, nextPaid: boolean) {
+    await setPaymentStatus(eventId, payments, userId, nextPaid);
+  }
+
+  async function handleToggleSubscription(
+    targetUserId: string,
+    targetName: string,
+    subscribed: boolean
+  ) {
+    if (!user || !monthKey) return;
+    await setSubscription(targetUserId, monthKey, subscribed, {
+      createdBy: user.uid,
+      userName: targetName,
+    });
+  }
 
   async function handleResponse(status: AttendanceStatus) {
     if (!user) return;
@@ -376,26 +442,101 @@ export default function AttendanceSection({
           <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-3xl font-extrabold tracking-tight text-foreground">
-                {confirmed.length > 0
+                {payers.length > 0
                   ? formatLei(perPlayer)
                   : formatLei(totalCost)}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {confirmed.length > 0
-                  ? `de jucător (${confirmed.length} confirma\u021bi)`
-                  : "cost total — niciun confirmat încă"}
+                {payers.length > 0
+                  ? `de jucător (${payers.length} de plată)`
+                  : "cost total — niciun jucător de plată"}
               </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Total teren:{" "}
-              <span className="font-semibold text-foreground">
-                {formatLei(totalCost)}
-              </span>
-            </p>
+            <div className="text-right text-sm text-muted-foreground">
+              <p>
+                Total teren:{" "}
+                <span className="font-semibold text-foreground">
+                  {formatLei(totalCost)}
+                </span>
+              </p>
+              <p className="mt-0.5">
+                Strâns:{" "}
+                <span className="font-semibold text-primary">
+                  {formatLei(collected)}
+                </span>{" "}
+                / {formatLei(perPlayer * payers.length)}
+              </p>
+            </div>
           </div>
+
+          {confirmed.length > 0 && (
+            <ul className="mt-4 divide-y divide-border/60 border-t border-border/60">
+              {confirmed.map((player) => {
+                const subscribed = Boolean(subscriptions[player.userId]);
+                const paid = isPaid(payments, player.userId);
+                return (
+                  <li
+                    key={player.userId}
+                    className="flex items-center justify-between gap-3 py-2.5"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                      {player.name}
+                    </span>
+                    {subscribed ? (
+                      <span className="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-medium text-accent-foreground">
+                        Abonament
+                      </span>
+                    ) : canManage ? (
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePaid(player.userId, !paid)}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          paid
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border bg-background text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {paid ? `Plătit · ${formatLei(perPlayer)}` : "Neplătit"}
+                      </button>
+                    ) : (
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          paid
+                            ? "bg-primary/15 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {paid ? "Plătit" : `${formatLei(perPlayer)}`}
+                      </span>
+                    )}
+                    {canManage && monthKey && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleSubscription(
+                            player.userId,
+                            player.name,
+                            !subscribed
+                          )
+                        }
+                        className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                        title={`Abonament ${monthLabel(monthKey)}`}
+                      >
+                        {subscribed ? "Anulează abonament" : "Abonează"}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           <p className="mt-3 text-xs text-muted-foreground">
-            Suma per jucător se recalculează automat pe măsură ce se confirmă
-            participanții.
+            {canManage
+              ? `Bifează cine a plătit. Abonații lunii ${
+                  monthKey ? monthLabel(monthKey) : ""
+                } sunt acoperiți și excluși din împărțeală.`
+              : "Suma per jucător se recalculează automat pe măsură ce se confirmă participanții."}
           </p>
         </div>
       )}
