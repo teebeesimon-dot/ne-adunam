@@ -200,6 +200,9 @@ export default function EventPageClient({ id }: EventPageClientProps) {
         maxParticipants={event.maxParticipants}
         pricePerHour={event.pricePerHour}
         durationMinutes={event.durationMinutes}
+        ownerId={event.ownerId}
+        eventDate={event.date}
+        canManage={user?.uid === event.ownerId}
       />
 
       <TeamGenerator

@@ -37,6 +37,8 @@ export function mapFirestoreEvent(
     seriesId: (data.seriesId as string) ?? undefined,
     seriesIndex: (data.seriesIndex as number) ?? undefined,
     seriesTotal: (data.seriesTotal as number) ?? undefined,
+    payments:
+      (data.payments as Event["payments"]) ?? undefined,
     teams: mapFirestoreTeams(data.teams),
     participants: (data.participants as Event["participants"]) ?? [],
   };

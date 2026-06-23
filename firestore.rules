@@ -162,6 +162,28 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
+    // subscriptions/{subscriptionId}  — document id: {userId}_{YYYY-MM}
+    // Monthly subscriptions managed by organizers / super admins.
+    // -------------------------------------------------------------------------
+
+    match /subscriptions/{subscriptionId} {
+      // Anyone signed in can read subscription status (to show "Abonament").
+      allow get, list: if isAuthenticated();
+
+      // Only organizers / super admins manage subscriptions.
+      allow create: if canCreateEvents()
+        && request.resource.data.createdBy == request.auth.uid
+        && subscriptionId == request.resource.data.userId + '_' + request.resource.data.month
+        && request.resource.data.keys().hasAll([
+          'userId', 'month', 'createdBy', 'createdAt'
+        ]);
+
+      allow delete: if canCreateEvents();
+
+      allow update: if false;
+    }
+
+    // -------------------------------------------------------------------------
     // Deny everything else
     // -------------------------------------------------------------------------
 

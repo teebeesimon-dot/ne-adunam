@@ -77,6 +77,7 @@ export interface Event {
   seriesId?: string;
   seriesIndex?: number;
   seriesTotal?: number;
+  payments?: Record<string, "paid" | "unpaid">;
   teams?: GeneratedTeams | null;
   participants?: Participant[];
   createdAt?: string;
