@@ -9,6 +9,11 @@ import {
   findUserGoingPosition,
   parseTimestamp,
 } from "@/lib/going-list";
+import {
+  computePerPlayer,
+  computeTotalCost,
+  formatLei,
+} from "@/lib/pricing";
 import { saveResponse } from "@/lib/responses";
 import type {
   AttendanceStatus,
@@ -19,6 +24,8 @@ import type {
 interface AttendanceSectionProps {
   eventId: string;
   maxParticipants: number;
+  pricePerHour?: number;
+  durationMinutes?: number;
 }
 
 const MAYBE_CONFIG = {
@@ -167,6 +174,8 @@ function SimpleParticipantList({
 export default function AttendanceSection({
   eventId,
   maxParticipants,
+  pricePerHour,
+  durationMinutes,
 }: AttendanceSectionProps) {
   const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [confirmed, setConfirmed] = useState<RankedParticipantEntry[]>([]);
@@ -239,6 +248,9 @@ export default function AttendanceSection({
 
     return () => unsubscribe();
   }, [eventId, maxParticipants, user]);
+
+  const totalCost = computeTotalCost(pricePerHour, durationMinutes);
+  const perPlayer = computePerPlayer(totalCost, confirmed.length);
 
   async function handleResponse(status: AttendanceStatus) {
     if (!user) return;
@@ -355,6 +367,38 @@ export default function AttendanceSection({
           </button>
         </div>
       </div>
+
+      {totalCost > 0 && (
+        <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Cost de plată
+          </h3>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-3xl font-extrabold tracking-tight text-foreground">
+                {confirmed.length > 0
+                  ? formatLei(perPlayer)
+                  : formatLei(totalCost)}
+              </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {confirmed.length > 0
+                  ? `de jucător (${confirmed.length} confirma\u021bi)`
+                  : "cost total — niciun confirmat încă"}
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Total teren:{" "}
+              <span className="font-semibold text-foreground">
+                {formatLei(totalCost)}
+              </span>
+            </p>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Suma per jucător se recalculează automat pe măsură ce se confirmă
+            participanții.
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-col gap-4">
         <RankedParticipantList

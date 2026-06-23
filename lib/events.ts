@@ -24,6 +24,8 @@ export function mapFirestoreEvent(
     sport: (data.sport as Sport) ?? "football",
     date: parseDate(data.date),
     time: (data.time as string) ?? "",
+    durationMinutes: (data.durationMinutes as number) ?? undefined,
+    pricePerHour: (data.pricePerHour as number) ?? undefined,
     location:
       (data.locationName as string) ?? (data.location as string) ?? "",
     placeId: (data.placeId as string) ?? undefined,

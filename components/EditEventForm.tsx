@@ -8,6 +8,13 @@ import { inputClassName, labelClassName, SPORTS } from "@/lib/event-form";
 import { db } from "@/lib/firebase";
 import type { EventLocation } from "@/lib/location";
 import { toFirestoreLocation } from "@/lib/location";
+import {
+  computeTotalCost,
+  DEFAULT_DURATION_MINUTES,
+  DURATION_OPTIONS,
+  formatLei,
+  formatTimeRange,
+} from "@/lib/pricing";
 import type { Event, Sport } from "@/lib/types";
 
 interface EditEventFormProps {
@@ -37,6 +44,12 @@ export default function EditEventForm({ event }: EditEventFormProps) {
   const [sport, setSport] = useState<Sport>(event.sport);
   const [date, setDate] = useState(event.date);
   const [time, setTime] = useState(event.time);
+  const [durationMinutes, setDurationMinutes] = useState(
+    event.durationMinutes ?? DEFAULT_DURATION_MINUTES
+  );
+  const [pricePerHour, setPricePerHour] = useState(
+    event.pricePerHour != null ? String(event.pricePerHour) : ""
+  );
   const [location, setLocation] = useState<EventLocation | null>(() =>
     getInitialLocation(event)
   );
@@ -45,6 +58,9 @@ export default function EditEventForm({ event }: EditEventFormProps) {
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const priceValue = Number(pricePerHour);
+  const totalCost = computeTotalCost(priceValue, durationMinutes);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -63,6 +79,8 @@ export default function EditEventForm({ event }: EditEventFormProps) {
         sport,
         date,
         time,
+        durationMinutes,
+        pricePerHour: priceValue > 0 ? priceValue : null,
         maxParticipants: Number(maxParticipants),
         updatedAt: Timestamp.now(),
         ...toFirestoreLocation(location),
@@ -126,18 +144,72 @@ export default function EditEventForm({ event }: EditEventFormProps) {
         </div>
         <div>
           <label htmlFor="time" className={labelClassName}>
-            Ora
+            Ora de început
           </label>
           <input
             id="time"
             type="time"
             required
+            step={1800}
             value={time}
             onChange={(e) => setTime(e.target.value)}
             className={inputClassName}
           />
         </div>
       </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label htmlFor="duration" className={labelClassName}>
+            Durată
+          </label>
+          <select
+            id="duration"
+            required
+            value={durationMinutes}
+            onChange={(e) => setDurationMinutes(Number(e.target.value))}
+            className={inputClassName}
+          >
+            {DURATION_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="pricePerHour" className={labelClassName}>
+            Cost teren / oră (lei)
+          </label>
+          <input
+            id="pricePerHour"
+            type="number"
+            min={0}
+            step={10}
+            value={pricePerHour}
+            onChange={(e) => setPricePerHour(e.target.value)}
+            className={inputClassName}
+            placeholder="Opțional, ex. 200"
+          />
+        </div>
+      </div>
+
+      {time && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+          <p className="font-medium text-foreground">
+            Interval: {formatTimeRange(time, durationMinutes)}
+          </p>
+          {totalCost > 0 && (
+            <p className="mt-1 text-muted-foreground">
+              Cost total teren:{" "}
+              <span className="font-semibold text-foreground">
+                {formatLei(totalCost)}
+              </span>{" "}
+              — se împarte automat la jucătorii confirmați.
+            </p>
+          )}
+        </div>
+      )}
 
       <LocationAutocomplete
         id="edit-location"

@@ -12,6 +12,12 @@ import { db } from "@/lib/firebase";
 import { formatEventDate, mapFirestoreEvent } from "@/lib/events";
 import { getEventLocationName } from "@/lib/location";
 import { SPORT_LABELS } from "@/lib/labels";
+import {
+  computeTotalCost,
+  formatDuration,
+  formatLei,
+  formatTimeRange,
+} from "@/lib/pricing";
 import type { Event } from "@/lib/types";
 
 interface EventPageClientProps {
@@ -110,9 +116,17 @@ export default function EventPageClient({ id }: EventPageClientProps) {
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Ora
+              Interval
             </dt>
-            <dd className="mt-1 text-card-foreground">{event.time}</dd>
+            <dd className="mt-1 text-card-foreground">
+              {formatTimeRange(event.time, event.durationMinutes)}
+              {event.durationMinutes ? (
+                <span className="text-muted-foreground">
+                  {" "}
+                  ({formatDuration(event.durationMinutes)})
+                </span>
+              ) : null}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -128,6 +142,29 @@ export default function EventPageClient({ id }: EventPageClientProps) {
             </dt>
             <dd className="mt-1 text-card-foreground">{event.maxParticipants}</dd>
           </div>
+          {event.pricePerHour ? (
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Cost teren
+              </dt>
+              <dd className="mt-1 text-card-foreground">
+                {formatLei(event.pricePerHour)}/oră
+                {event.durationMinutes ? (
+                  <span className="text-muted-foreground">
+                    {" — total "}
+                    <span className="font-semibold text-card-foreground">
+                      {formatLei(
+                        computeTotalCost(
+                          event.pricePerHour,
+                          event.durationMinutes
+                        )
+                      )}
+                    </span>
+                  </span>
+                ) : null}
+              </dd>
+            </div>
+          ) : null}
         </dl>
 
         <div className="mt-6 border-t border-border pt-6">
@@ -161,6 +198,8 @@ export default function EventPageClient({ id }: EventPageClientProps) {
       <AttendanceSection
         eventId={event.id}
         maxParticipants={event.maxParticipants}
+        pricePerHour={event.pricePerHour}
+        durationMinutes={event.durationMinutes}
       />
 
       <TeamGenerator

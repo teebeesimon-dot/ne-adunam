@@ -65,6 +65,8 @@ export interface Event {
   sport: Sport;
   date: string;
   time: string;
+  durationMinutes?: number;
+  pricePerHour?: number;
   location: string;
   placeId?: string;
   locationName?: string;
