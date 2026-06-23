@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -41,6 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Complete any sign-in that used the redirect fallback.
+    getRedirectResult(auth).catch((error) => {
+      console.error("[v0] getRedirectResult error:", error);
+    });
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       if (nextUser) {
         await saveUserProfile(nextUser);
@@ -73,7 +82,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      const code = (error as { code?: string })?.code ?? "";
+      // If the popup is blocked, closed, or otherwise unavailable,
+      // fall back to a full-page redirect, which works everywhere.
+      const popupFailed =
+        code === "auth/popup-blocked" ||
+        code === "auth/popup-closed-by-user" ||
+        code === "auth/cancelled-popup-request" ||
+        code === "auth/operation-not-supported-in-this-environment";
+
+      if (popupFailed) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+
+      console.error("[v0] signInWithGoogle error:", error);
+      throw error;
+    }
   }, []);
 
   const signOutUser = useCallback(async () => {
