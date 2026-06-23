@@ -23,7 +23,12 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // On iOS Safari, IndexedDB-based persistence can stall or be unavailable
 // (Intelligent Tracking Prevention, in-app browsers, private mode). Provide a
 // fallback chain so auth state still resolves and the session can persist.
+// `initializeAuth` must only run in the browser; on the server (prerender)
+// we fall back to plain `getAuth` to avoid Firebase internal assertions.
 function createAuth() {
+  if (typeof window === "undefined") {
+    return getAuth(app);
+  }
   try {
     return initializeAuth(app, {
       persistence: [indexedDBLocalPersistence, browserLocalPersistence],
