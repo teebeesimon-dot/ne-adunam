@@ -47,3 +47,44 @@ export function generateOccurrenceDates(
 
   return dates;
 }
+
+/** Today's date as an ISO string (YYYY-MM-DD), timezone-safe local. */
+export function todayISO(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
+}
+
+/** Returns the next occurrence date >= `fromDate`, aligned to the series grid. */
+export function nextOccurrenceOnOrAfter(
+  startDate: string,
+  frequency: RecurrenceFrequency,
+  fromDate: string
+): string {
+  if (!startDate) return "";
+  const start = new Date(`${startDate}T12:00:00Z`);
+  const from = new Date(`${(fromDate || startDate)}T12:00:00Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(from.getTime())) return "";
+
+  const intervalDays = intervalForFrequency(frequency);
+  const cursor = new Date(start);
+  let guard = 0;
+  while (cursor < from && guard < MAX_OCCURRENCES * 4) {
+    cursor.setUTCDate(cursor.getUTCDate() + intervalDays);
+    guard += 1;
+  }
+  return cursor.toISOString().slice(0, 10);
+}
+
+/** Returns the occurrence date strictly after `date`. */
+export function nextOccurrenceAfter(
+  date: string,
+  frequency: RecurrenceFrequency
+): string {
+  if (!date) return "";
+  const cursor = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(cursor.getTime())) return "";
+  cursor.setUTCDate(cursor.getUTCDate() + intervalForFrequency(frequency));
+  return cursor.toISOString().slice(0, 10);
+}

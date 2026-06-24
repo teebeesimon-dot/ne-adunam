@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { getEventLocationName } from "@/lib/location";
 import { SPORT_LABELS } from "@/lib/labels";
-import type { Event } from "@/lib/types";
+import { RECURRENCE_OPTIONS } from "@/lib/recurrence";
+import type { Event, Series } from "@/lib/types";
 
 interface EventCardProps {
   event: Event;
+  series?: Series;
 }
 
 function formatDate(date: string): string {
@@ -17,7 +19,15 @@ function formatDate(date: string): string {
   });
 }
 
-export default function EventCard({ event }: EventCardProps) {
+function frequencyLabel(frequency: Series["frequency"]): string {
+  return (
+    RECURRENCE_OPTIONS.find((o) => o.value === frequency)?.label ?? "Recurent"
+  );
+}
+
+export default function EventCard({ event, series }: EventCardProps) {
+  const isClosed = series?.status === "closed";
+
   return (
     <Link
       href={`/event/${event.id}`}
@@ -33,14 +43,29 @@ export default function EventCard({ event }: EventCardProps) {
         </span>
       </div>
 
-      {event.seriesId && event.seriesTotal ? (
-        <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-          Recurent · joc {(event.seriesIndex ?? 0) + 1} din {event.seriesTotal}
-        </span>
+      {series ? (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+            Serie · {frequencyLabel(series.frequency)}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+            {series.paymentModel === "monthly"
+              ? "Abonament lunar"
+              : "Plată pe joc"}
+          </span>
+          {isClosed && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              Încheiată
+            </span>
+          )}
+        </div>
       ) : null}
 
       <div className="mt-3 space-y-1 text-sm text-muted-foreground">
         <p>
+          {series && !isClosed ? (
+            <span className="font-medium text-foreground">Următoarea: </span>
+          ) : null}
           {formatDate(event.date)}
           {event.time ? ` · ${event.time}` : ""}
         </p>

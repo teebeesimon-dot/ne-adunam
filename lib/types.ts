@@ -59,6 +59,9 @@ export interface GeneratedTeams {
   generatedAt?: unknown;
 }
 
+/** How a series/event is paid for: per game (weekly) or a monthly subscription. */
+export type PaymentModel = "per_game" | "monthly";
+
 export interface Event {
   id: string;
   title: string;
@@ -77,8 +80,45 @@ export interface Event {
   seriesId?: string;
   seriesIndex?: number;
   seriesTotal?: number;
+  /** Explicit occurrence date for a series instance (mirrors `date`). */
+  occurrenceDate?: string;
+  /** Payment model snapshot from the parent series. */
+  paymentModel?: PaymentModel;
   payments?: Record<string, "paid" | "unpaid">;
   teams?: GeneratedTeams | null;
   participants?: Participant[];
   createdAt?: string;
+}
+
+/**
+ * A recurring series is the source of truth for recurrence. Individual
+ * occurrences are materialized lazily as `events` documents linked by `seriesId`.
+ */
+export interface Series {
+  id: string;
+  title: string;
+  sport: Sport;
+  time: string;
+  durationMinutes?: number;
+  maxParticipants: number;
+  location: string;
+  placeId?: string;
+  locationName?: string;
+  latitude?: number;
+  longitude?: number;
+  ownerId: string;
+  frequency: "weekly" | "biweekly";
+  startDate: string;
+  /** null = open-ended series (auto-advances to the next occurrence). */
+  endDate: string | null;
+  status: "active" | "closed";
+  paymentModel: PaymentModel;
+  /** Default per-game price (editable "from now on"). */
+  pricePerHour?: number;
+  /** Default monthly subscription price (editable). */
+  monthlyPrice?: number;
+  /** The currently materialized (upcoming) occurrence. */
+  currentEventId: string;
+  currentOccurrenceDate: string;
+  createdAt?: unknown;
 }

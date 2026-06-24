@@ -35,6 +35,7 @@ import {
 import type {
   AttendanceStatus,
   ParticipantEntry,
+  PaymentModel,
   RankedParticipantEntry,
 } from "@/lib/types";
 
@@ -46,6 +47,7 @@ interface AttendanceSectionProps {
   ownerId?: string;
   eventDate?: string;
   canManage?: boolean;
+  paymentModel?: PaymentModel;
 }
 
 const MAYBE_CONFIG = {
@@ -199,6 +201,7 @@ export default function AttendanceSection({
   ownerId,
   eventDate,
   canManage = false,
+  paymentModel = "per_game",
 }: AttendanceSectionProps) {
   const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [confirmed, setConfirmed] = useState<RankedParticipantEntry[]>([]);
@@ -444,7 +447,64 @@ export default function AttendanceSection({
         </div>
       </div>
 
-      {totalCost > 0 && (
+      {paymentModel === "monthly" && (
+        <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Abonament lunar{monthKey ? ` · ${monthLabel(monthKey)}` : ""}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {confirmed.filter((p) => subscriptions[p.userId]).length} din{" "}
+            {confirmed.length} confirmați au abonament activ pentru această lună.
+          </p>
+          {confirmed.length > 0 && (
+            <ul className="mt-4 divide-y divide-border/60 border-t border-border/60">
+              {confirmed.map((player) => {
+                const subscribed = Boolean(subscriptions[player.userId]);
+                return (
+                  <li
+                    key={player.userId}
+                    className="flex items-center justify-between gap-3 py-2.5"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                      {player.name}
+                    </span>
+                    {subscribed ? (
+                      <span className="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-medium text-accent-foreground">
+                        Abonat
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        Fără abonament
+                      </span>
+                    )}
+                    {canManage && monthKey && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleSubscription(
+                            player.userId,
+                            player.name,
+                            !subscribed
+                          )
+                        }
+                        className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                      >
+                        {subscribed ? "Anulează abonament" : "Abonează"}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            Abonamentul e global pe lună: acoperă toate jocurile seriei din luna
+            respectivă.
+          </p>
+        </div>
+      )}
+
+      {paymentModel !== "monthly" && totalCost > 0 && (
         <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Cost de plată

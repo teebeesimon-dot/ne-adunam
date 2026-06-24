@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AttendanceSection from "@/components/AttendanceSection";
 import OpenInGoogleMapsButton from "@/components/OpenInGoogleMapsButton";
+import SeriesPanel from "@/components/SeriesPanel";
 import ShareOnWhatsAppButton from "@/components/ShareOnWhatsAppButton";
 import TeamGenerator from "@/components/TeamGenerator";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -142,7 +143,7 @@ export default function EventPageClient({ id }: EventPageClientProps) {
             </dt>
             <dd className="mt-1 text-card-foreground">{event.maxParticipants}</dd>
           </div>
-          {event.pricePerHour ? (
+          {event.paymentModel !== "monthly" && event.pricePerHour ? (
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Cost teren
@@ -195,6 +196,14 @@ export default function EventPageClient({ id }: EventPageClientProps) {
         </div>
       </div>
 
+      {event.seriesId && (
+        <SeriesPanel
+          seriesId={event.seriesId}
+          currentViewedEventId={event.id}
+          isOwner={user?.uid === event.ownerId}
+        />
+      )}
+
       <AttendanceSection
         eventId={event.id}
         maxParticipants={event.maxParticipants}
@@ -203,6 +212,7 @@ export default function EventPageClient({ id }: EventPageClientProps) {
         ownerId={event.ownerId}
         eventDate={event.date}
         canManage={user?.uid === event.ownerId}
+        paymentModel={event.paymentModel}
       />
 
       <TeamGenerator

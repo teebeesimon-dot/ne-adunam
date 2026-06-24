@@ -2,7 +2,7 @@
 
 import { doc, Timestamp, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 import { inputClassName, labelClassName, SPORTS } from "@/lib/event-form";
 import { db } from "@/lib/firebase";
@@ -15,7 +15,8 @@ import {
   formatLei,
   formatTimeRange,
 } from "@/lib/pricing";
-import type { Event, Sport } from "@/lib/types";
+import { getSeries } from "@/lib/series";
+import type { Event, PaymentModel, Sport } from "@/lib/types";
 
 interface EditEventFormProps {
   event: Event;
@@ -59,7 +60,32 @@ export default function EditEventForm({ event }: EditEventFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const isSeries = Boolean(event.seriesId);
+  const paymentModel: PaymentModel = event.paymentModel ?? "per_game";
+  // For series occurrences, choose whether a price change applies to just this
+  // game or to the whole series from now on.
+  const [priceScope, setPriceScope] = useState<"occurrence" | "series">(
+    "occurrence"
+  );
+  const [monthlyPrice, setMonthlyPrice] = useState("");
+
+  // Load the parent series' monthly price (only relevant for monthly series).
+  useEffect(() => {
+    if (!event.seriesId) return;
+    let active = true;
+    getSeries(event.seriesId)
+      .then((s) => {
+        if (!active || !s) return;
+        setMonthlyPrice(s.monthlyPrice != null ? String(s.monthlyPrice) : "");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [event.seriesId]);
+
   const priceValue = Number(pricePerHour);
+  const monthlyValue = Number(monthlyPrice);
   const totalCost = computeTotalCost(priceValue, durationMinutes);
 
   async function handleSubmit(e: FormEvent) {
@@ -74,17 +100,38 @@ export default function EditEventForm({ event }: EditEventFormProps) {
     setSubmitting(true);
 
     try {
-      await updateDoc(doc(db, "events", event.id), {
+      const baseUpdate: Record<string, unknown> = {
         title: title.trim(),
         sport,
         date,
         time,
         durationMinutes,
-        pricePerHour: priceValue > 0 ? priceValue : null,
         maxParticipants: Number(maxParticipants),
         updatedAt: Timestamp.now(),
         ...toFirestoreLocation(location),
-      });
+      };
+
+      // Monthly series: price lives on the series doc, not the occurrence.
+      if (isSeries && paymentModel === "monthly") {
+        await updateDoc(doc(db, "events", event.id), baseUpdate);
+        if (event.seriesId) {
+          await updateDoc(doc(db, "series", event.seriesId), {
+            monthlyPrice: monthlyValue > 0 ? monthlyValue : null,
+          });
+        }
+      } else {
+        // Per-game (standalone or series): occurrence keeps its own price snapshot.
+        await updateDoc(doc(db, "events", event.id), {
+          ...baseUpdate,
+          pricePerHour: priceValue > 0 ? priceValue : null,
+        });
+        // "From now on" → also update the series default for future occurrences.
+        if (isSeries && priceScope === "series" && event.seriesId) {
+          await updateDoc(doc(db, "series", event.seriesId), {
+            pricePerHour: priceValue > 0 ? priceValue : null,
+          });
+        }
+      }
 
       router.push(`/event/${event.id}`);
     } catch {
@@ -177,24 +224,83 @@ export default function EditEventForm({ event }: EditEventFormProps) {
             ))}
           </select>
         </div>
+        {paymentModel === "per_game" && (
+          <div>
+            <label htmlFor="pricePerHour" className={labelClassName}>
+              Cost teren / oră (lei)
+            </label>
+            <input
+              id="pricePerHour"
+              type="number"
+              min={0}
+              step={10}
+              value={pricePerHour}
+              onChange={(e) => setPricePerHour(e.target.value)}
+              className={inputClassName}
+              placeholder="Opțional, ex. 200"
+            />
+          </div>
+        )}
+      </div>
+
+      {isSeries && paymentModel === "monthly" && (
         <div>
-          <label htmlFor="pricePerHour" className={labelClassName}>
-            Cost teren / oră (lei)
+          <label htmlFor="monthlyPrice" className={labelClassName}>
+            Cost abonament lunar / jucător (lei)
           </label>
           <input
-            id="pricePerHour"
+            id="monthlyPrice"
             type="number"
             min={0}
             step={10}
-            value={pricePerHour}
-            onChange={(e) => setPricePerHour(e.target.value)}
+            value={monthlyPrice}
+            onChange={(e) => setMonthlyPrice(e.target.value)}
             className={inputClassName}
-            placeholder="Opțional, ex. 200"
+            placeholder="ex. 150"
           />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Se aplică întregii serii (abonamentul e global pe lună).
+          </p>
         </div>
-      </div>
+      )}
 
-      {time && (
+      {isSeries && paymentModel === "per_game" && (
+        <div className="rounded-xl border border-border bg-muted/30 p-4">
+          <span className={labelClassName}>Aplică modificarea de preț</span>
+          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+            {(
+              [
+                { value: "occurrence" as const, label: "Doar acest joc" },
+                {
+                  value: "series" as const,
+                  label: "Toată seria (de acum încolo)",
+                },
+              ]
+            ).map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${
+                  priceScope === opt.value
+                    ? "border-primary bg-primary/10 font-semibold text-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="priceScope"
+                  value={opt.value}
+                  checked={priceScope === opt.value}
+                  onChange={() => setPriceScope(opt.value)}
+                  className="h-4 w-4 accent-primary"
+                />
+                {opt.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {time && paymentModel === "per_game" && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
           <p className="font-medium text-foreground">
             Interval: {formatTimeRange(time, durationMinutes)}
@@ -246,7 +352,7 @@ export default function EditEventForm({ event }: EditEventFormProps) {
           disabled={submitting}
           className="w-full rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
         >
-          {submitting ? "Se salvează..." : "Salvează modificările"}
+          {submitting ? "Se salvează..." : "Salvează modific��rile"}
         </button>
         <button
           type="button"
