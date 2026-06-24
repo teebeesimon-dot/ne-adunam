@@ -9,9 +9,18 @@
 import crypto from "node:crypto";
 import { readFileSync } from "node:fs";
 
-const rawKey = process.env.SERVICE_ACCOUNT_FILE
+let rawKey = process.env.SERVICE_ACCOUNT_FILE
   ? readFileSync(process.env.SERVICE_ACCOUNT_FILE, "utf8")
   : (process.env.FIREBASE_SERVICE_ACCOUNT ?? "");
+
+// The value may have been pasted wrapped in single or double quotes.
+rawKey = rawKey.trim();
+if (
+  (rawKey.startsWith("'") && rawKey.endsWith("'")) ||
+  (rawKey.startsWith('"') && rawKey.endsWith('"') && !rawKey.startsWith('"{'))
+) {
+  rawKey = rawKey.slice(1, -1);
+}
 
 const sa = JSON.parse(rawKey || "{}");
 if (!sa.private_key) {
