@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   query,
   setDoc,
@@ -70,6 +71,78 @@ export async function joinGroup(params: {
     },
     { merge: true }
   );
+}
+
+/**
+ * Add an existing site user to a group on their behalf. Used by the group
+ * owner / super admin from the admin panel or the group page. Same write as
+ * `joinGroup`; Firestore rules enforce that the caller is owner/super admin.
+ */
+export async function addMember(params: {
+  groupId: string;
+  groupType: GroupType;
+  ownerId: string;
+  userId: string;
+  userName: string;
+  userPhoto: string | null;
+}): Promise<void> {
+  await joinGroup(params);
+}
+
+/** One-time fetch of the set of userIds already in a group. */
+export async function getGroupMemberIds(groupId: string): Promise<Set<string>> {
+  if (!groupId) return new Set();
+  const q = query(collection(db, "members"), where("groupId", "==", groupId));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map((d) => (d.data() as { userId: string }).userId));
+}
+
+/** A selectable group for the admin panel (series or standalone event). */
+export interface AdminGroup {
+  groupId: string;
+  groupType: GroupType;
+  ownerId: string;
+  label: string;
+  subtitle: string;
+}
+
+/**
+ * List every group (all series + standalone events) for the admin picker.
+ * Requires super-admin list permission on series/events (see Firestore rules).
+ * Series occurrences are skipped — they share their series roster.
+ */
+export async function getAllGroupsForAdmin(): Promise<AdminGroup[]> {
+  const [seriesSnap, eventsSnap] = await Promise.all([
+    getDocs(collection(db, "series")),
+    getDocs(collection(db, "events")),
+  ]);
+
+  const groups: AdminGroup[] = [];
+
+  seriesSnap.forEach((d) => {
+    const data = d.data() as Record<string, unknown>;
+    groups.push({
+      groupId: d.id,
+      groupType: "series",
+      ownerId: (data.ownerId as string) ?? "",
+      label: (data.title as string) ?? "Serie",
+      subtitle: "Serie recurentă",
+    });
+  });
+
+  eventsSnap.forEach((d) => {
+    const data = d.data() as Record<string, unknown>;
+    if (data.seriesId) return; // occurrences belong to their series group
+    groups.push({
+      groupId: d.id,
+      groupType: "event",
+      ownerId: (data.ownerId as string) ?? "",
+      label: (data.title as string) ?? "Eveniment",
+      subtitle: data.date ? `Eveniment · ${data.date as string}` : "Eveniment",
+    });
+  });
+
+  return groups.sort((a, b) => a.label.localeCompare(b.label, "ro"));
 }
 
 /**

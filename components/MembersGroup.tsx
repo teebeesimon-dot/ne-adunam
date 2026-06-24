@@ -4,6 +4,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { db } from "@/lib/firebase";
+import MemberPicker from "@/components/MemberPicker";
 import {
   joinGroup,
   removeMember,
@@ -81,6 +82,7 @@ export default function MembersGroup({
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const monthKey = eventDate ? monthKeyFromDate(eventDate) : "";
 
@@ -225,6 +227,15 @@ export default function MembersGroup({
           >
             {copied ? "Link copiat!" : "Copiază link grup"}
           </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="inline-flex items-center justify-center rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20 active:scale-[0.98]"
+            >
+              Adaugă membri
+            </button>
+          )}
           {!isMember && (
             <button
               type="button"
@@ -237,6 +248,16 @@ export default function MembersGroup({
           )}
         </div>
       </div>
+
+      {pickerOpen && (
+        <MemberPicker
+          groupId={groupId}
+          groupType={groupType}
+          ownerId={ownerId}
+          existingUserIds={new Set(members.map((m) => m.userId))}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <p className="text-sm text-muted-foreground">

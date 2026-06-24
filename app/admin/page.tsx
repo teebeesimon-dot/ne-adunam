@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdminGroupMembers from "@/components/AdminGroupMembers";
 import AdminPanel from "@/components/AdminPanel";
 import RequireSuperAdmin from "@/components/RequireSuperAdmin";
 
@@ -11,17 +12,18 @@ export default function AdminPage() {
             href="/"
             className="mb-6 inline-flex items-center text-sm font-medium text-primary transition hover:text-primary-hover"
           >
-            ← Back home
+            ← Înapoi acasă
           </Link>
 
           <header className="mb-8">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Admin</h1>
             <p className="mt-2 text-muted-foreground">
-              Manage users and organizer access.
+              Gestionează utilizatorii, accesul de organizator și membrii grupurilor.
             </p>
           </header>
 
           <AdminPanel />
+          <AdminGroupMembers />
         </div>
       </RequireSuperAdmin>
     </div>
