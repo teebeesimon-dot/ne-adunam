@@ -53,7 +53,7 @@ interface AttendanceSectionProps {
 const MAYBE_CONFIG = {
   status: "poate" as const,
   label: "Poate",
-  groupTitle: "Maybe",
+  groupTitle: "Poate",
   buttonClass: "bg-accent hover:bg-accent/90 text-accent-foreground",
   listClass:
     "border-accent/30 bg-accent/10 dark:border-accent/30 dark:bg-accent/10",
@@ -62,7 +62,7 @@ const MAYBE_CONFIG = {
 const NOT_GOING_CONFIG = {
   status: "nu_vin" as const,
   label: "Nu vin",
-  groupTitle: "Not Going",
+  groupTitle: "Nu vin",
   buttonClass:
     "bg-muted-foreground/80 hover:bg-muted-foreground text-background",
   listClass: "border-border bg-muted",
@@ -72,7 +72,7 @@ const VIN_BUTTON_CLASS =
   "bg-primary hover:bg-primary-hover text-primary-foreground";
 
 function getParticipantName(data: Record<string, unknown>): string {
-  return (data.userName as string) || (data.name as string) || "Unknown";
+  return (data.userName as string) || (data.name as string) || "Necunoscut";
 }
 
 function getParticipantPhoto(data: Record<string, unknown>): string | null {
@@ -170,7 +170,7 @@ function SimpleParticipantList({
         {title} ({count})
       </h3>
       {participants.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No one yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Nimeni încă.</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {participants.map((participant) => (
@@ -365,14 +365,14 @@ export default function AttendanceSection({
         <h2 className="mb-4 text-xl font-bold tracking-tight text-foreground">Prezență</h2>
         <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
           <p className="text-muted-foreground">
-            Sign in with Google to confirm your attendance.
+            Conectează-te cu Google pentru a-ți confirma prezența.
           </p>
           <button
             type="button"
             onClick={signInWithGoogle}
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
           >
-            Sign in with Google
+            Conectează-te cu Google
           </button>
         </div>
       </section>
@@ -394,14 +394,14 @@ export default function AttendanceSection({
             {currentStatus === "vin" && userPosition && (
               <p className="text-sm text-muted-foreground">
                 {userPosition.isWaitlisted
-                  ? `Waiting list: ${userPosition.positionLabel}`
-                  : `Confirmed: ${userPosition.positionLabel}`}
+                  ? `Listă de așteptare: ${userPosition.positionLabel}`
+                  : `Confirmat: ${userPosition.positionLabel}`}
               </p>
             )}
             {currentStatus && currentStatus !== "vin" && (
               <p className="text-sm text-muted-foreground">
-                Your response:{" "}
-                {currentStatus === "poate" ? "Maybe" : "Not Going"}
+                Răspunsul tău:{" "}
+                {currentStatus === "poate" ? "Poate" : "Nu vin"}
               </p>
             )}
           </div>
@@ -613,16 +613,16 @@ export default function AttendanceSection({
 
       <div className="mt-6 flex flex-col gap-4">
         <RankedParticipantList
-          title={`Going (${confirmed.length}/${maxParticipants})`}
+          title={`Confirmați (${confirmed.length}/${maxParticipants})`}
           participants={confirmed}
           className="border-primary/30 bg-primary/5"
-          emptyMessage="No confirmed players yet."
+          emptyMessage="Niciun jucător confirmat încă."
         />
         <RankedParticipantList
-          title={`Waiting List (${waitlist.length})`}
+          title={`Listă de așteptare (${waitlist.length})`}
           participants={waitlist}
           className="border-accent/30 bg-accent/5"
-          emptyMessage="No one on the waiting list."
+          emptyMessage="Nimeni pe lista de așteptare."
         />
         <SimpleParticipantList
           title={MAYBE_CONFIG.groupTitle}

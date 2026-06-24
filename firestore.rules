@@ -215,6 +215,46 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
+    // members/{memberId}  — document id: {groupId}_{userId}
+    // Persistent roster for a series (or standalone event). Anyone signed in
+    // with the link can join themselves; the group owner / super admin can
+    // remove anyone; members can remove themselves.
+    // -------------------------------------------------------------------------
+
+    match /members/{memberId} {
+      function isGroupOwner() {
+        return isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      }
+
+      function isJoiningSelf() {
+        return isAuthenticated()
+          && request.resource.data.userId == request.auth.uid
+          && memberId == request.resource.data.groupId + '_' + request.auth.uid;
+      }
+
+      allow get, list: if isAuthenticated();
+
+      allow create: if isJoiningSelf()
+        && request.resource.data.keys().hasAll([
+          'groupId', 'groupType', 'ownerId', 'userId', 'joinedAt'
+        ]);
+
+      // Allow self to refresh own name/photo; group owner may not need updates.
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.groupId == resource.data.groupId
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      // Self-leave, group owner removal, or super admin.
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid
+        || isGroupOwner()
+        || isSuperAdmin()
+      );
+    }
+
+    // -------------------------------------------------------------------------
     // Deny everything else
     // -------------------------------------------------------------------------
 

@@ -42,7 +42,7 @@ export default function AdminPanel() {
     try {
       await updateUserRole(targetUid, role);
     } catch {
-      setError("Could not update role. Try again.");
+      setError("Nu am putut actualiza rolul. Încearcă din nou.");
     } finally {
       setUpdatingUid(null);
     }
@@ -51,7 +51,7 @@ export default function AdminPanel() {
   if (loading) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center">
-        <p className="text-muted-foreground">Loading users...</p>
+        <p className="text-muted-foreground">Se încarcă utilizatorii...</p>
       </div>
     );
   }
@@ -69,10 +69,10 @@ export default function AdminPanel() {
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-border bg-muted">
               <tr>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">Name</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Nume</th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">Email</th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">Role</th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">Actions</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Rol</th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">Acțiuni</th>
               </tr>
             </thead>
             <tbody>
@@ -93,7 +93,7 @@ export default function AdminPanel() {
                     </td>
                     <td className="px-4 py-3">
                       {isSuperAdminUser || isCurrentUser ? (
-                        <span className="text-xs text-muted-foreground">No actions</span>
+                        <span className="text-xs text-muted-foreground">Fără acțiuni</span>
                       ) : profile.role === "user" ? (
                         <button
                           type="button"

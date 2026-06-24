@@ -90,14 +90,14 @@ export default function EventList() {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-muted p-8 text-center">
         <p className="text-muted-foreground">
-          Sign in with Google to see your events.
+          Conectează-te cu Google pentru a-ți vedea evenimentele.
         </p>
         <button
           type="button"
           onClick={signInWithGoogle}
           className="mt-4 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
         >
-          Sign in with Google
+          Conectează-te cu Google
         </button>
       </div>
     );

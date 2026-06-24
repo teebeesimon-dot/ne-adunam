@@ -62,7 +62,7 @@ function TeamCard({
         {title} ({players.length})
       </h3>
       {players.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No players assigned.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Niciun jucător alocat.</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {players.map((player) => (
@@ -86,7 +86,7 @@ function TeamCard({
 }
 
 function getParticipantName(data: Record<string, unknown>): string {
-  return (data.userName as string) || (data.name as string) || "Unknown";
+  return (data.userName as string) || (data.name as string) || "Necunoscut";
 }
 
 function getParticipantPhoto(data: Record<string, unknown>): string | null {
@@ -161,7 +161,7 @@ export default function TeamGenerator({
         },
       });
     } catch {
-      setError("Could not generate teams. Try again.");
+      setError("Nu am putut genera echipele. Încearcă din nou.");
     } finally {
       setGenerating(false);
     }
@@ -177,7 +177,7 @@ export default function TeamGenerator({
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Teams</h2>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Echipe</h2>
         {isOwner && (
           <button
             type="button"
@@ -186,17 +186,17 @@ export default function TeamGenerator({
             className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {generating
-              ? "Generating..."
+              ? "Se generează..."
               : hasTeams
-                ? "Regenerate Random Teams"
-                : "Random Teams"}
+                ? "Regenerează echipe"
+                : "Echipe aleatorii"}
           </button>
         )}
       </div>
 
       {isOwner && confirmed.length < 2 && (
         <p className="mb-4 text-sm text-muted-foreground">
-          At least 2 confirmed players are needed to generate teams.
+          Sunt necesari cel puțin 2 jucători confirmați pentru a genera echipe.
         </p>
       )}
 
@@ -209,12 +209,12 @@ export default function TeamGenerator({
       {hasTeams ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <TeamCard
-            title="Team A"
+            title="Echipa A"
             players={teams.teamA}
             className="border-primary/30 bg-primary/5"
           />
           <TeamCard
-            title="Team B"
+            title="Echipa B"
             players={teams.teamB}
             className="border-accent/40 bg-accent/10"
           />
@@ -223,7 +223,7 @@ export default function TeamGenerator({
         isOwner && (
           <div className="rounded-2xl border border-dashed border-border bg-muted p-8 text-center">
             <p className="text-muted-foreground">
-              Generate random teams from confirmed players.
+              Generează echipe aleatorii din jucătorii confirmați.
             </p>
           </div>
         )

@@ -23,7 +23,7 @@ export default function AuthButton() {
         className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-card-foreground transition hover:bg-muted"
       >
         <GoogleIcon />
-        Sign in with Google
+        Conectează-te cu Google
       </button>
     );
   }
@@ -59,7 +59,7 @@ export default function AuthButton() {
         onClick={signOutUser}
         className="rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
       >
-        Sign out
+        Deconectează-te
       </button>
     </div>
   );
