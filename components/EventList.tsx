@@ -47,18 +47,24 @@ export default function EventList() {
       orderBy("date", "asc")
     );
 
+    console.log("[v0] EventList subscribing for uid:", user.uid);
     const unsubEvents = onSnapshot(
       eventsQuery,
       (snapshot) => {
+        console.log("[v0] events snapshot size:", snapshot.size);
         setEvents(
           snapshot.docs.map((d) => mapFirestoreEvent(d.id, d.data()))
         );
         setLoadingEvents(false);
       },
-      () => setLoadingEvents(false)
+      (err) => {
+        console.log("[v0] events snapshot ERROR:", err.code, err.message);
+        setLoadingEvents(false);
+      }
     );
 
     const unsubSeries = subscribeOwnerSeries(user.uid, (list) => {
+      console.log("[v0] series snapshot size:", list.length);
       setSeries(list);
       setLoadingSeries(false);
     });
