@@ -10,6 +10,16 @@ import {
   type Member,
 } from "@/lib/members";
 
+/** Build a distinctive option label, avoiding redundant "Tenis (Tenis)". */
+function formatOptionLabel(g: AdminGroup): string {
+  const sportSuffix =
+    g.sport && g.sport.toLowerCase() !== g.label.toLowerCase()
+      ? ` (${g.sport})`
+      : "";
+  const dateSuffix = g.dateLabel ? ` · ${g.dateLabel}` : "";
+  return `${g.label}${sportSuffix}${dateSuffix}`;
+}
+
 export default function AdminGroupMembers() {
   const [groups, setGroups] = useState<AdminGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
@@ -39,6 +49,15 @@ export default function AdminGroupMembers() {
   const selectedGroup = useMemo(
     () => groups.find((g) => g.groupId === selectedId) ?? null,
     [groups, selectedId]
+  );
+
+  const seriesGroups = useMemo(
+    () => groups.filter((g) => g.groupType === "series"),
+    [groups]
+  );
+  const eventGroups = useMemo(
+    () => groups.filter((g) => g.groupType === "event"),
+    [groups]
   );
 
   // Live roster of the selected group.
@@ -84,16 +103,46 @@ export default function AdminGroupMembers() {
             <option value="">
               {loadingGroups ? "Se încarcă grupurile..." : "Selectează un grup"}
             </option>
-            {groups.map((g) => (
-              <option key={g.groupId} value={g.groupId}>
-                {g.label} — {g.subtitle}
-              </option>
-            ))}
+            {seriesGroups.length > 0 && (
+              <optgroup label="Serii recurente">
+                {seriesGroups.map((g) => (
+                  <option key={g.groupId} value={g.groupId}>
+                    {formatOptionLabel(g)}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {eventGroups.length > 0 && (
+              <optgroup label="Evenimente individuale">
+                {eventGroups.map((g) => (
+                  <option key={g.groupId} value={g.groupId}>
+                    {formatOptionLabel(g)}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
 
         {selectedGroup && (
           <div className="mt-5">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {selectedGroup.label}
+              </span>
+              {selectedGroup.groupType === "series" ? (
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                  Serie recurentă
+                </span>
+              ) : (
+                <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                  Eveniment{selectedGroup.dateLabel ? ` · ${selectedGroup.dateLabel}` : ""}
+                </span>
+              )}
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {selectedGroup.sport}
+              </span>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-foreground">
                 Membri ({members.length})

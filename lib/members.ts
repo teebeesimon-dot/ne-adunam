@@ -10,6 +10,8 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { SPORT_LABELS } from "@/lib/labels";
+import type { Sport } from "@/lib/types";
 
 export type GroupType = "series" | "event";
 
@@ -103,7 +105,26 @@ export interface AdminGroup {
   groupType: GroupType;
   ownerId: string;
   label: string;
-  subtitle: string;
+  sport: string;
+  /** Empty for series; formatted date (RO) for standalone events. */
+  dateLabel: string;
+}
+
+/** Format an ISO date string (yyyy-mm-dd) as a short Romanian label. */
+function formatRoDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("ro-RO", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** Romanian sport label, falling back to the raw value. */
+function sportLabel(sport: unknown): string {
+  if (typeof sport !== "string") return "—";
+  return SPORT_LABELS[sport as Sport] ?? sport;
 }
 
 /**
@@ -126,7 +147,8 @@ export async function getAllGroupsForAdmin(): Promise<AdminGroup[]> {
       groupType: "series",
       ownerId: (data.ownerId as string) ?? "",
       label: (data.title as string) ?? "Serie",
-      subtitle: "Serie recurentă",
+      sport: sportLabel(data.sport),
+      dateLabel: "",
     });
   });
 
@@ -138,7 +160,8 @@ export async function getAllGroupsForAdmin(): Promise<AdminGroup[]> {
       groupType: "event",
       ownerId: (data.ownerId as string) ?? "",
       label: (data.title as string) ?? "Eveniment",
-      subtitle: data.date ? `Eveniment · ${data.date as string}` : "Eveniment",
+      sport: sportLabel(data.sport),
+      dateLabel: data.date ? formatRoDate(data.date as string) : "",
     });
   });
 
