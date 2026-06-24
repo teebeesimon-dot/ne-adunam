@@ -12,6 +12,7 @@ import {
   computeTotalCost,
   DEFAULT_DURATION_MINUTES,
   DURATION_OPTIONS,
+  formatDuration,
   formatLei,
   formatTimeRange,
 } from "@/lib/pricing";
@@ -76,8 +77,9 @@ export default function CreateEventForm() {
       : 0;
   // Divisor: the fixed group size; falls back to the max participants value.
   const groupSizeValue = Number(groupSize) || Number(maxParticipants) || 0;
-  const { monthlyTotal, perPlayer } = computeMonthlySubscription({
+  const { sessionCost, monthlyTotal, perPlayer } = computeMonthlySubscription({
     pricePerHour: priceValue,
+    durationMinutes,
     occurrencesInMonth,
     groupSize: groupSizeValue,
   });
@@ -401,16 +403,23 @@ export default function CreateEventForm() {
               </p>
             </div>
 
-            {priceValue > 0 && occurrencesInMonth > 0 && groupSizeValue > 0 && (
+            {sessionCost > 0 && occurrencesInMonth > 0 && groupSizeValue > 0 && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
                 <p className="text-muted-foreground">
+                  Cost/ședință: {formatLei(priceValue)}/oră ×{" "}
+                  {formatDuration(durationMinutes)} ={" "}
+                  <span className="font-semibold text-foreground">
+                    {formatLei(sessionCost)}
+                  </span>
+                </p>
+                <p className="mt-1 text-muted-foreground">
                   Luna{" "}
                   <span className="font-medium text-foreground">
                     {monthLabel(monthKey)}
                   </span>
                   : {occurrencesInMonth}{" "}
                   {occurrencesInMonth === 1 ? "apariție" : "apariții"} ×{" "}
-                  {formatLei(priceValue)}/oră ={" "}
+                  {formatLei(sessionCost)} ={" "}
                   <span className="font-semibold text-foreground">
                     {formatLei(monthlyTotal)}
                   </span>
