@@ -280,7 +280,7 @@ export default function CreateEventForm() {
             id="pricePerHour"
             type="number"
             min={0}
-            step={10}
+            step={1}
             value={pricePerHour}
             onChange={(e) => setPricePerHour(e.target.value)}
             className={inputClassName}
@@ -438,10 +438,10 @@ export default function CreateEventForm() {
                 Cost abonament lunar / membru (lei)
               </label>
               <input
-                id="monthlyPrice"
-                type="number"
-                min={0}
-                step={10}
+            id="monthlyPrice"
+            type="number"
+            min={0}
+            step="any"
                 value={monthlyFieldValue}
                 onChange={(e) => {
                   setMonthlyEdited(true);
