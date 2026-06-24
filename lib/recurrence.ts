@@ -88,3 +88,34 @@ export function nextOccurrenceAfter(
   cursor.setUTCDate(cursor.getUTCDate() + intervalForFrequency(frequency));
   return cursor.toISOString().slice(0, 10);
 }
+
+/**
+ * Counts how many occurrences (grid anchored at `startDate`) fall within the
+ * given month (`monthKey` = "YYYY-MM"). Used to estimate a monthly subscription
+ * for the upcoming month.
+ */
+export function countOccurrencesInMonth(
+  startDate: string,
+  frequency: RecurrenceFrequency,
+  monthKey: string
+): number {
+  if (!startDate || !monthKey) return 0;
+  const start = new Date(`${startDate}T12:00:00Z`);
+  if (Number.isNaN(start.getTime())) return 0;
+
+  const intervalDays = intervalForFrequency(frequency);
+  const cursor = new Date(start);
+  let count = 0;
+  let guard = 0;
+
+  while (guard < MAX_OCCURRENCES * 4) {
+    const key = cursor.toISOString().slice(0, 7);
+    if (key === monthKey) count += 1;
+    // Grid only moves forward, so once we pass the month we can stop.
+    if (key > monthKey) break;
+    cursor.setUTCDate(cursor.getUTCDate() + intervalDays);
+    guard += 1;
+  }
+
+  return count;
+}

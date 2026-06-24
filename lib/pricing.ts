@@ -57,6 +57,27 @@ export function computePerPlayer(
   return totalCost / confirmedCount;
 }
 
+/**
+ * Monthly subscription cost. Product rule: price-per-hour × the number of
+ * occurrences that fall in the upcoming month, split across a fixed group size
+ * (every member pays, regardless of who actually attends each game).
+ */
+export function computeMonthlySubscription(params: {
+  pricePerHour?: number;
+  occurrencesInMonth?: number;
+  groupSize?: number;
+}): { monthlyTotal: number; perPlayer: number } {
+  const price = params.pricePerHour ?? 0;
+  const occurrences = params.occurrencesInMonth ?? 0;
+  const group = params.groupSize ?? 0;
+  if (price <= 0 || occurrences <= 0) {
+    return { monthlyTotal: 0, perPlayer: 0 };
+  }
+  const monthlyTotal = price * occurrences;
+  const perPlayer = group > 0 ? monthlyTotal / group : 0;
+  return { monthlyTotal, perPlayer };
+}
+
 // Formats a RON amount, dropping trailing ".00" for whole numbers.
 export function formatLei(amount: number): string {
   if (!Number.isFinite(amount)) return "0 lei";

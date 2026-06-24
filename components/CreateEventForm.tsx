@@ -1,16 +1,14 @@
 "use client";
 
-import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 import { useAuth } from "@/contexts/AuthProvider";
 import { inputClassName, labelClassName, SPORTS } from "@/lib/event-form";
 import { formatEventDateShort } from "@/lib/events";
-import { db } from "@/lib/firebase";
 import type { EventLocation } from "@/lib/location";
-import { toFirestoreLocation } from "@/lib/location";
 import {
+  computeMonthlySubscription,
   computeTotalCost,
   DEFAULT_DURATION_MINUTES,
   DURATION_OPTIONS,
@@ -18,18 +16,38 @@ import {
   formatTimeRange,
 } from "@/lib/pricing";
 import {
+  countOccurrencesInMonth,
   generateOccurrenceDates,
   RECURRENCE_OPTIONS,
   type RecurrenceFrequency,
 } from "@/lib/recurrence";
 import { createSeries } from "@/lib/series";
+import { monthLabel } from "@/lib/subscriptions";
 import type { PaymentModel, Sport } from "@/lib/types";
+
+const PAYMENT_OPTIONS: {
+  value: PaymentModel;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "per_game",
+    label: "Plată săptămânală",
+    hint: "Cost teren/oră, împărțit la jucătorii confirmați la fiecare joc",
+  },
+  {
+    value: "monthly",
+    label: "Abonament lunar",
+    hint: "Sumă lunară per membru, calculată automat",
+  },
+];
 
 export default function CreateEventForm() {
   const router = useRouter();
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [sport, setSport] = useState<Sport>("football");
+  const [paymentModel, setPaymentModel] = useState<PaymentModel>("per_game");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(
@@ -38,27 +56,43 @@ export default function CreateEventForm() {
   const [pricePerHour, setPricePerHour] = useState("");
   const [location, setLocation] = useState<EventLocation | null>(null);
   const [maxParticipants, setMaxParticipants] = useState("");
-  const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("weekly");
   const [endDate, setEndDate] = useState("");
-  const [paymentModel, setPaymentModel] = useState<PaymentModel>("per_game");
+  const [groupSize, setGroupSize] = useState("");
   const [monthlyPrice, setMonthlyPrice] = useState("");
+  const [monthlyEdited, setMonthlyEdited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const priceValue = Number(pricePerHour);
-  const monthlyValue = Number(monthlyPrice);
   const totalCost = computeTotalCost(priceValue, durationMinutes);
-  // Monthly subscription is only meaningful for recurring series.
-  const effectivePaymentModel: PaymentModel = isRecurring
-    ? paymentModel
-    : "per_game";
+
+  // Both payment models create a recurring series. The monthly subscription is
+  // estimated for the month of the start date (the upcoming month).
+  const monthKey = date ? date.slice(0, 7) : "";
+  const occurrencesInMonth =
+    paymentModel === "monthly" && date
+      ? countOccurrencesInMonth(date, frequency, monthKey)
+      : 0;
+  // Divisor: the fixed group size; falls back to the max participants value.
+  const groupSizeValue = Number(groupSize) || Number(maxParticipants) || 0;
+  const { monthlyTotal, perPlayer } = computeMonthlySubscription({
+    pricePerHour: priceValue,
+    occurrencesInMonth,
+    groupSize: groupSizeValue,
+  });
+  const computedPerPlayer = Math.round(perPlayer);
+  // The per-player field is auto-filled with the computed amount until edited.
+  const monthlyFieldValue = monthlyEdited
+    ? monthlyPrice
+    : computedPerPlayer > 0
+      ? String(computedPerPlayer)
+      : "";
+  const monthlyValue = Number(monthlyFieldValue);
 
   // Preview only: when an end date is set, show how many occurrences fall in range.
   const occurrenceDates =
-    isRecurring && date && endDate
-      ? generateOccurrenceDates(date, endDate, frequency)
-      : [];
+    date && endDate ? generateOccurrenceDates(date, endDate, frequency) : [];
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -69,19 +103,17 @@ export default function CreateEventForm() {
       return;
     }
 
-    if (isRecurring && endDate && occurrenceDates.length === 0) {
+    if (endDate && occurrenceDates.length === 0) {
       setError(
         "Data de sfârșit trebuie să fie după data de început (sau lasă-o goală pentru o serie deschisă)."
       );
       return;
     }
 
-    if (
-      isRecurring &&
-      effectivePaymentModel === "monthly" &&
-      !(monthlyValue > 0)
-    ) {
-      setError("Introdu suma abonamentului lunar.");
+    if (paymentModel === "monthly" && !(monthlyValue > 0)) {
+      setError(
+        "Completează costul terenului/oră (și numărul de membri) ca să se calculeze abonamentul, sau introdu suma manual."
+      );
       return;
     }
 
@@ -89,40 +121,27 @@ export default function CreateEventForm() {
     setSubmitting(true);
 
     try {
-      if (isRecurring) {
-        // Recurring → create a series + its first occurrence (lazy materialization).
-        const eventId = await createSeries({
-          title: title.trim(),
-          sport,
-          time,
-          durationMinutes,
-          maxParticipants: Number(maxParticipants),
-          location,
-          ownerId: user.uid,
-          frequency,
-          startDate: date,
-          endDate: endDate || null,
-          paymentModel: effectivePaymentModel,
-          ...(priceValue > 0 ? { pricePerHour: priceValue } : {}),
-          ...(monthlyValue > 0 ? { monthlyPrice: monthlyValue } : {}),
-        });
-        router.push(`/event/${eventId}`);
-      } else {
-        // Standalone one-off event.
-        await addDoc(collection(db, "events"), {
-          title: title.trim(),
-          sport,
-          time,
-          durationMinutes,
-          ...(priceValue > 0 ? { pricePerHour: priceValue } : {}),
-          maxParticipants: Number(maxParticipants),
-          ownerId: user.uid,
-          createdAt: Timestamp.now(),
-          ...toFirestoreLocation(location),
-          date,
-        });
-        router.push("/");
-      }
+      const eventId = await createSeries({
+        title: title.trim(),
+        sport,
+        time,
+        durationMinutes,
+        maxParticipants: Number(maxParticipants),
+        location,
+        ownerId: user.uid,
+        frequency,
+        startDate: date,
+        endDate: endDate || null,
+        paymentModel,
+        ...(priceValue > 0 ? { pricePerHour: priceValue } : {}),
+        ...(paymentModel === "monthly" && monthlyValue > 0
+          ? { monthlyPrice: monthlyValue }
+          : {}),
+        ...(paymentModel === "monthly" && groupSizeValue > 0
+          ? { groupSize: groupSizeValue }
+          : {}),
+      });
+      router.push(`/event/${eventId}`);
     } catch {
       setError("Nu s-a putut salva evenimentul. Încearcă din nou.");
       setSubmitting(false);
@@ -165,10 +184,47 @@ export default function CreateEventForm() {
         </select>
       </div>
 
+      <div>
+        <span className={labelClassName}>Tip plată</span>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {PAYMENT_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2.5 transition ${
+                paymentModel === opt.value
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-background hover:border-primary/40"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentModel"
+                  value={opt.value}
+                  checked={paymentModel === opt.value}
+                  onChange={() => setPaymentModel(opt.value)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <span className="text-sm font-semibold text-foreground">
+                  {opt.label}
+                </span>
+              </span>
+              <span className="ml-6 text-xs text-muted-foreground">
+                {opt.hint}
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Ambele variante creează o serie recurentă. Pe pagina principală apare
+          doar apariția care urmează, restul rămân în istoric.
+        </p>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="date" className={labelClassName}>
-            {isRecurring ? "Data de început" : "Data"}
+            Data de început
           </label>
           <input
             id="date"
@@ -214,26 +270,24 @@ export default function CreateEventForm() {
             ))}
           </select>
         </div>
-        {effectivePaymentModel === "per_game" && (
-          <div>
-            <label htmlFor="pricePerHour" className={labelClassName}>
-              Cost teren / oră (lei)
-            </label>
-            <input
-              id="pricePerHour"
-              type="number"
-              min={0}
-              step={10}
-              value={pricePerHour}
-              onChange={(e) => setPricePerHour(e.target.value)}
-              className={inputClassName}
-              placeholder="Opțional, ex. 200"
-            />
-          </div>
-        )}
+        <div>
+          <label htmlFor="pricePerHour" className={labelClassName}>
+            Cost teren / oră (lei)
+          </label>
+          <input
+            id="pricePerHour"
+            type="number"
+            min={0}
+            step={10}
+            value={pricePerHour}
+            onChange={(e) => setPricePerHour(e.target.value)}
+            className={inputClassName}
+            placeholder="ex. 200"
+          />
+        </div>
       </div>
 
-      {time && effectivePaymentModel === "per_game" && (
+      {time && paymentModel === "per_game" && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
           <p className="font-medium text-foreground">
             Interval: {formatTimeRange(time, durationMinutes)}
@@ -250,11 +304,7 @@ export default function CreateEventForm() {
         </div>
       )}
 
-      <LocationAutocomplete
-        value={location}
-        onChange={setLocation}
-        required
-      />
+      <LocationAutocomplete value={location} onChange={setLocation} required />
 
       <div>
         <label htmlFor="maxParticipants" className={labelClassName}>
@@ -272,150 +322,131 @@ export default function CreateEventForm() {
         />
       </div>
 
-      <div className="rounded-2xl border border-border bg-muted/30 p-4">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={isRecurring}
-            onChange={(e) => setIsRecurring(e.target.checked)}
-            className="mt-1 h-4 w-4 shrink-0 accent-primary"
-          />
-          <span>
-            <span className="block text-sm font-semibold text-foreground">
-              Se repetă (serie)
-            </span>
-            <span className="block text-xs text-muted-foreground">
-              Creează o serie. Pe pagina principală apare doar apariția care
-              urmează, restul rămân în istoric.
-            </span>
-          </span>
-        </label>
+      <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="frequency" className={labelClassName}>
+              Frecvență
+            </label>
+            <select
+              id="frequency"
+              value={frequency}
+              onChange={(e) =>
+                setFrequency(e.target.value as RecurrenceFrequency)
+              }
+              className={inputClassName}
+            >
+              {RECURRENCE_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="endDate" className={labelClassName}>
+              Data de sfârșit (opțional)
+            </label>
+            <input
+              id="endDate"
+              type="date"
+              value={endDate}
+              min={date || undefined}
+              onChange={(e) => setEndDate(e.target.value)}
+              className={inputClassName}
+            />
+          </div>
+        </div>
 
-        {isRecurring && (
-          <div className="mt-4 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="frequency" className={labelClassName}>
-                  Frecvență
-                </label>
-                <select
-                  id="frequency"
-                  value={frequency}
-                  onChange={(e) =>
-                    setFrequency(e.target.value as RecurrenceFrequency)
-                  }
-                  className={inputClassName}
-                >
-                  {RECURRENCE_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="endDate" className={labelClassName}>
-                  Data de sfârșit (opțional)
-                </label>
-                <input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  min={date || undefined}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className={inputClassName}
-                />
-              </div>
-            </div>
+        <p className="text-xs text-muted-foreground">
+          {endDate ? (
+            occurrenceDates.length > 0 && date ? (
+              <>
+                Serie cu sfârșit:{" "}
+                <span className="font-semibold text-foreground">
+                  {occurrenceDates.length} apariții
+                </span>
+                , între {formatEventDateShort(occurrenceDates[0])} și{" "}
+                {formatEventDateShort(
+                  occurrenceDates[occurrenceDates.length - 1]
+                )}
+                .
+              </>
+            ) : (
+              "Data de sfârșit trebuie să fie după data de început."
+            )
+          ) : (
+            "Fără dată de sfârșit = serie deschisă. O poți închide oricând mai târziu, iar istoricul rămâne."
+          )}
+        </p>
 
-            <p className="text-xs text-muted-foreground">
-              {endDate ? (
-                occurrenceDates.length > 0 && date ? (
-                  <>
-                    Serie cu sfârșit:{" "}
-                    <span className="font-semibold text-foreground">
-                      {occurrenceDates.length} apariții
-                    </span>
-                    , între {formatEventDateShort(occurrenceDates[0])} și{" "}
-                    {formatEventDateShort(
-                      occurrenceDates[occurrenceDates.length - 1]
-                    )}
-                    .
-                  </>
-                ) : (
-                  "Data de sfârșit trebuie să fie după data de început."
-                )
-              ) : (
-                "Fără dată de sfârșit = serie deschisă. O poți închide oricând mai târziu, iar istoricul rămâne."
-              )}
-            </p>
-
+        {paymentModel === "monthly" && (
+          <div className="space-y-4 border-t border-border pt-4">
             <div>
-              <span className={labelClassName}>Model de plată</span>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    {
-                      value: "per_game" as PaymentModel,
-                      label: "Plată pe joc",
-                      hint: "Cost teren/oră, împărțit la jucători",
-                    },
-                    {
-                      value: "monthly" as PaymentModel,
-                      label: "Abonament lunar",
-                      hint: "Sumă lunară per jucător",
-                    },
-                  ]
-                ).map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2.5 transition ${
-                      paymentModel === opt.value
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-background hover:border-primary/40"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="paymentModel"
-                        value={opt.value}
-                        checked={paymentModel === opt.value}
-                        onChange={() => setPaymentModel(opt.value)}
-                        className="h-4 w-4 accent-primary"
-                      />
-                      <span className="text-sm font-semibold text-foreground">
-                        {opt.label}
-                      </span>
-                    </span>
-                    <span className="ml-6 text-xs text-muted-foreground">
-                      {opt.hint}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <label htmlFor="groupSize" className={labelClassName}>
+                Membri în grup (împărțire abonament)
+              </label>
+              <input
+                id="groupSize"
+                type="number"
+                min={1}
+                value={groupSize}
+                onChange={(e) => setGroupSize(e.target.value)}
+                className={inputClassName}
+                placeholder={maxParticipants || "ex. 8"}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abonamentul se împarte mereu la acest număr de membri, indiferent
+                câți vin la fiecare joc.
+              </p>
             </div>
 
-            {paymentModel === "monthly" && (
-              <div>
-                <label htmlFor="monthlyPrice" className={labelClassName}>
-                  Cost abonament lunar / jucător (lei)
-                </label>
-                <input
-                  id="monthlyPrice"
-                  type="number"
-                  min={0}
-                  step={10}
-                  value={monthlyPrice}
-                  onChange={(e) => setMonthlyPrice(e.target.value)}
-                  className={inputClassName}
-                  placeholder="ex. 150"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Se poate modifica ulterior din pagina seriei.
+            {priceValue > 0 && occurrencesInMonth > 0 && groupSizeValue > 0 && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+                <p className="text-muted-foreground">
+                  Luna{" "}
+                  <span className="font-medium text-foreground">
+                    {monthLabel(monthKey)}
+                  </span>
+                  : {occurrencesInMonth}{" "}
+                  {occurrencesInMonth === 1 ? "apariție" : "apariții"} ×{" "}
+                  {formatLei(priceValue)}/oră ={" "}
+                  <span className="font-semibold text-foreground">
+                    {formatLei(monthlyTotal)}
+                  </span>
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Împărțit la {groupSizeValue} membri ={" "}
+                  <span className="font-semibold text-foreground">
+                    {formatLei(perPlayer)}/membru
+                  </span>
                 </p>
               </div>
             )}
+
+            <div>
+              <label htmlFor="monthlyPrice" className={labelClassName}>
+                Cost abonament lunar / membru (lei)
+              </label>
+              <input
+                id="monthlyPrice"
+                type="number"
+                min={0}
+                step={10}
+                value={monthlyFieldValue}
+                onChange={(e) => {
+                  setMonthlyEdited(true);
+                  setMonthlyPrice(e.target.value);
+                }}
+                className={inputClassName}
+                placeholder="ex. 150"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {monthlyEdited
+                  ? "Sumă introdusă manual."
+                  : "Calculat automat — îl poți modifica. Se poate ajusta ulterior din pagina seriei."}
+              </p>
+            </div>
           </div>
         )}
       </div>

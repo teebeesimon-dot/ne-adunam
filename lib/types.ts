@@ -115,8 +115,13 @@ export interface Series {
   paymentModel: PaymentModel;
   /** Default per-game price (editable "from now on"). */
   pricePerHour?: number;
-  /** Default monthly subscription price (editable). */
+  /** Default monthly subscription price per player (editable). */
   monthlyPrice?: number;
+  /**
+   * Fixed number of paying members in the group. The monthly subscription total
+   * is split across this many people, regardless of attendance per game.
+   */
+  groupSize?: number;
   /** The currently materialized (upcoming) occurrence. */
   currentEventId: string;
   currentOccurrenceDate: string;

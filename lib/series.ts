@@ -49,6 +49,7 @@ export function mapFirestoreSeries(
     paymentModel: (data.paymentModel as PaymentModel) ?? "per_game",
     pricePerHour: (data.pricePerHour as number) ?? undefined,
     monthlyPrice: (data.monthlyPrice as number) ?? undefined,
+    groupSize: (data.groupSize as number) ?? undefined,
     currentEventId: (data.currentEventId as string) ?? "",
     currentOccurrenceDate: (data.currentOccurrenceDate as string) ?? "",
     createdAt: data.createdAt,
@@ -69,6 +70,7 @@ interface CreateSeriesInput {
   paymentModel: PaymentModel;
   pricePerHour?: number;
   monthlyPrice?: number;
+  groupSize?: number;
 }
 
 /** Builds the `events` occurrence document payload for a given date. */
@@ -156,6 +158,7 @@ export async function createSeries(input: CreateSeriesInput): Promise<string> {
     paymentModel: input.paymentModel,
     ...(input.pricePerHour ? { pricePerHour: input.pricePerHour } : {}),
     ...(input.monthlyPrice ? { monthlyPrice: input.monthlyPrice } : {}),
+    ...(input.groupSize ? { groupSize: input.groupSize } : {}),
     currentEventId: eventRef.id,
     currentOccurrenceDate: firstOccurrence,
     ...location,
