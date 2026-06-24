@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins, Geist_Mono } from "next/font/google";
 import { AppHeader } from "@/components/AuthButton";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthProvider";
 import { env } from "@/lib/env";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 const appDescription =
-  "Organizează evenimente sportive, confirmă prezența echipei și generează echipe aleatorii.";
+  "Vezi cine vine. Joacă mai mult. Organizează rapid activități sportive și vezi în timp real cine participă.";
 
 const metadataBase = new URL(
   env.appUrl ?? "https://ne-adunam.vercel.app"
@@ -26,31 +27,31 @@ const metadataBase = new URL(
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: "Ne Adunam",
-    template: "%s | Ne Adunam",
+    default: "prezenta",
+    template: "%s | prezenta",
   },
   description: appDescription,
-  applicationName: "Ne Adunam",
+  applicationName: "prezenta",
   keywords: [
-    "evenimente sportive",
+    "activități sportive",
     "prezență",
     "echipe",
     "organizare",
     "România",
   ],
-  authors: [{ name: "Ne Adunam" }],
-  creator: "Ne Adunam",
+  authors: [{ name: "prezenta" }],
+  creator: "prezenta",
   openGraph: {
     type: "website",
     locale: "ro_RO",
-    siteName: "Ne Adunam",
-    title: "Ne Adunam",
+    siteName: "prezenta",
+    title: "prezenta — Vezi cine vine. Joacă mai mult.",
     description: appDescription,
     url: metadataBase,
   },
   twitter: {
     card: "summary",
-    title: "Ne Adunam",
+    title: "prezenta — Vezi cine vine. Joacă mai mult.",
     description: appDescription,
   },
   robots: {
@@ -61,8 +62,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f7f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#07100d" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0d0d" },
   ],
   colorScheme: "light dark",
 };
@@ -76,7 +77,7 @@ export default function RootLayout({
     <html
       lang="ro"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full bg-background antialiased`}
+      className={`${poppins.variable} ${geistMono.variable} h-full bg-background antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider
