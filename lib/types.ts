@@ -84,6 +84,11 @@ export interface Event {
   occurrenceDate?: string;
   /** Payment model snapshot from the parent series. */
   paymentModel?: PaymentModel;
+  /** How long before the event registration opens (snapshot from series). */
+  registrationLeadValue?: number;
+  registrationLeadUnit?: "hours" | "days";
+  /** Fixed clock time (HH:mm) used when the lead unit is "days". */
+  registrationOpenTime?: string;
   payments?: Record<string, "paid" | "unpaid">;
   teams?: GeneratedTeams | null;
   participants?: Participant[];
@@ -125,5 +130,10 @@ export interface Series {
   /** The currently materialized (upcoming) occurrence. */
   currentEventId: string;
   currentOccurrenceDate: string;
+  /** Registration window: opens this many hours/days before each occurrence. */
+  registrationLeadValue?: number;
+  registrationLeadUnit?: "hours" | "days";
+  /** Fixed clock time (HH:mm) used when the lead unit is "days". */
+  registrationOpenTime?: string;
   createdAt?: unknown;
 }

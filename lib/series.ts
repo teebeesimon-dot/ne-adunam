@@ -53,6 +53,10 @@ export function mapFirestoreSeries(
     groupSize: (data.groupSize as number) ?? undefined,
     currentEventId: (data.currentEventId as string) ?? "",
     currentOccurrenceDate: (data.currentOccurrenceDate as string) ?? "",
+    registrationLeadValue: (data.registrationLeadValue as number) ?? undefined,
+    registrationLeadUnit:
+      (data.registrationLeadUnit as Series["registrationLeadUnit"]) ?? undefined,
+    registrationOpenTime: (data.registrationOpenTime as string) ?? undefined,
     createdAt: data.createdAt,
   };
 }
@@ -72,6 +76,9 @@ interface CreateSeriesInput {
   pricePerHour?: number;
   monthlyPrice?: number;
   groupSize?: number;
+  registrationLeadValue?: number;
+  registrationLeadUnit?: "hours" | "days";
+  registrationOpenTime?: string;
 }
 
 /** Builds the `events` occurrence document payload for a given date. */
@@ -85,6 +92,9 @@ function buildOccurrenceData(
     ownerId: string;
     paymentModel: PaymentModel;
     pricePerHour?: number;
+    registrationLeadValue?: number;
+    registrationLeadUnit?: "hours" | "days";
+    registrationOpenTime?: string;
   },
   location: ReturnType<typeof toFirestoreLocation>,
   seriesId: string,
@@ -101,6 +111,15 @@ function buildOccurrenceData(
     // Price snapshot at materialization time (history keeps its own price).
     ...(series.paymentModel === "per_game" && series.pricePerHour
       ? { pricePerHour: series.pricePerHour }
+      : {}),
+    ...(series.registrationLeadValue && series.registrationLeadUnit
+      ? {
+          registrationLeadValue: series.registrationLeadValue,
+          registrationLeadUnit: series.registrationLeadUnit,
+          ...(series.registrationLeadUnit === "days" && series.registrationOpenTime
+            ? { registrationOpenTime: series.registrationOpenTime }
+            : {}),
+        }
       : {}),
     date: occurrenceDate,
     occurrenceDate,
@@ -138,6 +157,9 @@ export async function createSeries(input: CreateSeriesInput): Promise<string> {
         ownerId: input.ownerId,
         paymentModel: input.paymentModel,
         pricePerHour: input.pricePerHour,
+        registrationLeadValue: input.registrationLeadValue,
+        registrationLeadUnit: input.registrationLeadUnit,
+        registrationOpenTime: input.registrationOpenTime,
       },
       location,
       seriesRef.id,
@@ -160,6 +182,15 @@ export async function createSeries(input: CreateSeriesInput): Promise<string> {
     ...(input.pricePerHour ? { pricePerHour: input.pricePerHour } : {}),
     ...(input.monthlyPrice ? { monthlyPrice: input.monthlyPrice } : {}),
     ...(input.groupSize ? { groupSize: input.groupSize } : {}),
+    ...(input.registrationLeadValue && input.registrationLeadUnit
+      ? {
+          registrationLeadValue: input.registrationLeadValue,
+          registrationLeadUnit: input.registrationLeadUnit,
+          ...(input.registrationLeadUnit === "days" && input.registrationOpenTime
+            ? { registrationOpenTime: input.registrationOpenTime }
+            : {}),
+        }
+      : {}),
     currentEventId: eventRef.id,
     currentOccurrenceDate: firstOccurrence,
     ...location,
@@ -218,6 +249,9 @@ export async function ensureCurrentOccurrence(
         ownerId: series.ownerId,
         paymentModel: series.paymentModel,
         pricePerHour: series.pricePerHour,
+        registrationLeadValue: series.registrationLeadValue,
+        registrationLeadUnit: series.registrationLeadUnit,
+        registrationOpenTime: series.registrationOpenTime,
       },
       location,
       series.id,

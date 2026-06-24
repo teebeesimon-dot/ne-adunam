@@ -1,6 +1,6 @@
 "use client";
 
-import { doc, Timestamp, updateDoc } from "firebase/firestore";
+import { deleteField, doc, Timestamp, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
@@ -15,6 +15,10 @@ import {
   formatLei,
   formatTimeRange,
 } from "@/lib/pricing";
+import {
+  describeRegistrationLead,
+  type RegistrationLeadUnit,
+} from "@/lib/registration";
 import { getSeries } from "@/lib/series";
 import type { Event, PaymentModel, Sport } from "@/lib/types";
 
@@ -59,6 +63,19 @@ export default function EditEventForm({ event }: EditEventFormProps) {
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [registrationEnabled, setRegistrationEnabled] = useState(
+    Boolean(event.registrationLeadValue && event.registrationLeadUnit)
+  );
+  const [registrationLeadValue, setRegistrationLeadValue] = useState(
+    event.registrationLeadValue != null
+      ? String(event.registrationLeadValue)
+      : "2"
+  );
+  const [registrationLeadUnit, setRegistrationLeadUnit] =
+    useState<RegistrationLeadUnit>(event.registrationLeadUnit ?? "days");
+  const [registrationOpenTime, setRegistrationOpenTime] = useState(
+    event.registrationOpenTime ?? ""
+  );
 
   const isSeries = Boolean(event.seriesId);
   const paymentModel: PaymentModel = event.paymentModel ?? "per_game";
@@ -100,6 +117,22 @@ export default function EditEventForm({ event }: EditEventFormProps) {
     setSubmitting(true);
 
     try {
+      const regFields: Record<string, unknown> =
+        registrationEnabled && Number(registrationLeadValue) > 0
+          ? {
+              registrationLeadValue: Number(registrationLeadValue),
+              registrationLeadUnit,
+              registrationOpenTime:
+                registrationLeadUnit === "days" && registrationOpenTime
+                  ? registrationOpenTime
+                  : deleteField(),
+            }
+          : {
+              registrationLeadValue: deleteField(),
+              registrationLeadUnit: deleteField(),
+              registrationOpenTime: deleteField(),
+            };
+
       const baseUpdate: Record<string, unknown> = {
         title: title.trim(),
         sport,
@@ -108,6 +141,7 @@ export default function EditEventForm({ event }: EditEventFormProps) {
         durationMinutes,
         maxParticipants: Number(maxParticipants),
         updatedAt: Timestamp.now(),
+        ...regFields,
         ...toFirestoreLocation(location),
       };
 
@@ -131,6 +165,10 @@ export default function EditEventForm({ event }: EditEventFormProps) {
             pricePerHour: priceValue > 0 ? priceValue : null,
           });
         }
+      }
+
+      if (isSeries && event.seriesId) {
+        await updateDoc(doc(db, "series", event.seriesId), regFields);
       }
 
       router.push(`/event/${event.id}`);
@@ -338,6 +376,95 @@ export default function EditEventForm({ event }: EditEventFormProps) {
           onChange={(e) => setMaxParticipants(e.target.value)}
           className={inputClassName}
         />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={registrationEnabled}
+            onChange={(e) => setRegistrationEnabled(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-primary"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-foreground">
+              Deschidere programată a înscrierilor
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {isSeries
+                ? "Se aplică tuturor aparițiilor seriei (de acum încolo)."
+                : "Înscrierile se blochează până la momentul stabilit."}
+            </span>
+          </span>
+        </label>
+
+        {registrationEnabled && (
+          <div className="space-y-4 border-t border-border pt-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="regLeadValue" className={labelClassName}>
+                  Se deschid cu
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="regLeadValue"
+                    type="number"
+                    min={1}
+                    value={registrationLeadValue}
+                    onChange={(e) => setRegistrationLeadValue(e.target.value)}
+                    className={inputClassName}
+                    placeholder="2"
+                  />
+                  <select
+                    aria-label="Unitate"
+                    value={registrationLeadUnit}
+                    onChange={(e) =>
+                      setRegistrationLeadUnit(
+                        e.target.value as RegistrationLeadUnit
+                      )
+                    }
+                    className={inputClassName}
+                  >
+                    <option value="hours">ore înainte</option>
+                    <option value="days">zile înainte</option>
+                  </select>
+                </div>
+              </div>
+
+              {registrationLeadUnit === "days" && (
+                <div>
+                  <label htmlFor="regOpenTime" className={labelClassName}>
+                    La ora (opțional)
+                  </label>
+                  <input
+                    id="regOpenTime"
+                    type="time"
+                    step={300}
+                    value={registrationOpenTime}
+                    onChange={(e) => setRegistrationOpenTime(e.target.value)}
+                    className={inputClassName}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Gol = se folosește ora de început a jocului.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Înscrieri:{" "}
+              <span className="font-semibold text-foreground">
+                {describeRegistrationLead(
+                  Number(registrationLeadValue),
+                  registrationLeadUnit,
+                  registrationLeadUnit === "days"
+                    ? registrationOpenTime
+                    : undefined
+                )}
+              </span>
+            </p>
+          </div>
+        )}
       </div>
 
       {error && (

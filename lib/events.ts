@@ -49,6 +49,10 @@ export function mapFirestoreEvent(
     seriesIndex: (data.seriesIndex as number) ?? undefined,
     seriesTotal: (data.seriesTotal as number) ?? undefined,
     paymentModel: (data.paymentModel as Event["paymentModel"]) ?? undefined,
+    registrationLeadValue: (data.registrationLeadValue as number) ?? undefined,
+    registrationLeadUnit:
+      (data.registrationLeadUnit as Event["registrationLeadUnit"]) ?? undefined,
+    registrationOpenTime: (data.registrationOpenTime as string) ?? undefined,
     payments:
       (data.payments as Event["payments"]) ?? undefined,
     teams: mapFirestoreTeams(data.teams),

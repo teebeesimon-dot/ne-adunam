@@ -24,6 +24,11 @@ import {
   isPaid,
   setPaymentStatus,
 } from "@/lib/payments";
+import {
+  computeRegistrationOpensAt,
+  formatCountdown,
+  formatRegistrationOpensAt,
+} from "@/lib/registration";
 import { saveResponse } from "@/lib/responses";
 import {
   monthKeyFromDate,
@@ -46,8 +51,12 @@ interface AttendanceSectionProps {
   durationMinutes?: number;
   ownerId?: string;
   eventDate?: string;
+  eventTime?: string;
   canManage?: boolean;
   paymentModel?: PaymentModel;
+  registrationLeadValue?: number;
+  registrationLeadUnit?: "hours" | "days";
+  registrationOpenTime?: string;
 }
 
 const MAYBE_CONFIG = {
@@ -200,8 +209,12 @@ export default function AttendanceSection({
   durationMinutes,
   ownerId,
   eventDate,
+  eventTime,
   canManage = false,
   paymentModel = "per_game",
+  registrationLeadValue,
+  registrationLeadUnit,
+  registrationOpenTime,
 }: AttendanceSectionProps) {
   const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [confirmed, setConfirmed] = useState<RankedParticipantEntry[]>([]);
@@ -213,6 +226,24 @@ export default function AttendanceSection({
   const [submitting, setSubmitting] = useState<AttendanceStatus | null>(null);
   const [payments, setPayments] = useState<Record<string, "paid" | "unpaid">>({});
   const [subscriptions, setSubscriptions] = useState<SubscriptionMap>({});
+  const [now, setNow] = useState(() => Date.now());
+
+  const registrationOpensAt = computeRegistrationOpensAt({
+    date: eventDate ?? "",
+    time: eventTime ?? "",
+    registrationLeadValue,
+    registrationLeadUnit,
+    registrationOpenTime,
+  });
+  const registrationOpen =
+    !registrationOpensAt || now >= registrationOpensAt.getTime();
+
+  // While registration is still locked, tick once a second for the countdown.
+  useEffect(() => {
+    if (registrationOpen) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [registrationOpen]);
 
   const monthKey = eventDate ? monthKeyFromDate(eventDate) : "";
 
@@ -333,6 +364,7 @@ export default function AttendanceSection({
 
   async function handleResponse(status: AttendanceStatus) {
     if (!user) return;
+    if (!registrationOpen) return;
 
     setSubmitting(status);
 
@@ -407,10 +439,24 @@ export default function AttendanceSection({
           </div>
         </div>
 
+        {!registrationOpen && registrationOpensAt && (
+          <div className="mb-4 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">
+              Înscrierile nu sunt încă deschise
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Se deschid {formatRegistrationOpensAt(registrationOpensAt)}.
+            </p>
+            <p className="mt-2 text-2xl font-extrabold tabular-nums tracking-tight text-foreground">
+              {formatCountdown(registrationOpensAt.getTime() - now)}
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <button
             type="button"
-            disabled={submitting !== null}
+            disabled={submitting !== null || !registrationOpen}
             onClick={() => handleResponse("vin")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "vin"
@@ -422,7 +468,7 @@ export default function AttendanceSection({
           </button>
           <button
             type="button"
-            disabled={submitting !== null}
+            disabled={submitting !== null || !registrationOpen}
             onClick={() => handleResponse("poate")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "poate"
@@ -434,7 +480,7 @@ export default function AttendanceSection({
           </button>
           <button
             type="button"
-            disabled={submitting !== null}
+            disabled={submitting !== null || !registrationOpen}
             onClick={() => handleResponse("nu_vin")}
             className={`rounded-xl px-3 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
               currentStatus === "nu_vin"

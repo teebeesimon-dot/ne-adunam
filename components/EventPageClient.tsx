@@ -14,6 +14,10 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { db } from "@/lib/firebase";
 import { formatEventDate, mapFirestoreEvent } from "@/lib/events";
 import { getEventLocationName } from "@/lib/location";
+import {
+  computeRegistrationOpensAt,
+  formatRegistrationOpensAt,
+} from "@/lib/registration";
 import { resolveGroup } from "@/lib/members";
 import { SPORT_LABELS } from "@/lib/labels";
 import {
@@ -85,6 +89,13 @@ export default function EventPageClient({ id }: EventPageClientProps) {
   }
 
   const canManage = user?.uid === event.ownerId || isSuperAdmin;
+  const registrationOpensAt = computeRegistrationOpensAt({
+    date: event.date,
+    time: event.time,
+    registrationLeadValue: event.registrationLeadValue,
+    registrationLeadUnit: event.registrationLeadUnit,
+    registrationOpenTime: event.registrationOpenTime,
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -148,6 +159,16 @@ export default function EventPageClient({ id }: EventPageClientProps) {
             </dt>
             <dd className="mt-1 text-card-foreground">{event.maxParticipants}</dd>
           </div>
+          {registrationOpensAt ? (
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Deschidere înscrieri
+              </dt>
+              <dd className="mt-1 text-card-foreground">
+                {formatRegistrationOpensAt(registrationOpensAt)}
+              </dd>
+            </div>
+          ) : null}
           {event.paymentModel !== "monthly" && event.pricePerHour ? (
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -230,8 +251,12 @@ export default function EventPageClient({ id }: EventPageClientProps) {
         durationMinutes={event.durationMinutes}
         ownerId={event.ownerId}
         eventDate={event.date}
+        eventTime={event.time}
         canManage={canManage}
         paymentModel={event.paymentModel}
+        registrationLeadValue={event.registrationLeadValue}
+        registrationLeadUnit={event.registrationLeadUnit}
+        registrationOpenTime={event.registrationOpenTime}
       />
 
       <TeamGenerator
