@@ -255,10 +255,18 @@ export async function getSeries(seriesId: string): Promise<Series | null> {
   return mapFirestoreSeries(snap.id, snap.data());
 }
 
-/** Fetches all occurrences (events) of a series, newest first. */
-export async function getSeriesHistory(seriesId: string): Promise<Event[]> {
+/**
+ * Fetches all occurrences (events) of a series, newest first.
+ * Includes the ownerId filter so it satisfies the events `list` security rule
+ * (which requires queries to be scoped to the requesting owner).
+ */
+export async function getSeriesHistory(
+  seriesId: string,
+  ownerId: string
+): Promise<Event[]> {
   const q = query(
     collection(db, "events"),
+    where("ownerId", "==", ownerId),
     where("seriesId", "==", seriesId)
   );
   const snap = await getDocs(q);

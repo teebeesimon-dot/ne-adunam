@@ -53,8 +53,9 @@ export default function SeriesPanel({
 
   // Refresh history whenever the series' current occurrence changes.
   useEffect(() => {
+    if (!series?.ownerId) return;
     let active = true;
-    getSeriesHistory(seriesId)
+    getSeriesHistory(seriesId, series.ownerId)
       .then((list) => {
         if (active) setHistory(list);
       })
@@ -64,7 +65,7 @@ export default function SeriesPanel({
     return () => {
       active = false;
     };
-  }, [seriesId, series?.currentEventId]);
+  }, [seriesId, series?.ownerId, series?.currentEventId]);
 
   if (!series) return null;
 

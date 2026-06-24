@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import EventCard from "@/components/EventCard";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -41,30 +35,25 @@ export default function EventList() {
     setLoadingEvents(true);
     setLoadingSeries(true);
 
+    // No orderBy here — items are sorted client-side below, which avoids
+    // requiring a composite Firestore index on (ownerId, date).
     const eventsQuery = query(
       collection(db, "events"),
-      where("ownerId", "==", user.uid),
-      orderBy("date", "asc")
+      where("ownerId", "==", user.uid)
     );
 
-    console.log("[v0] EventList subscribing for uid:", user.uid);
     const unsubEvents = onSnapshot(
       eventsQuery,
       (snapshot) => {
-        console.log("[v0] events snapshot size:", snapshot.size);
         setEvents(
           snapshot.docs.map((d) => mapFirestoreEvent(d.id, d.data()))
         );
         setLoadingEvents(false);
       },
-      (err) => {
-        console.log("[v0] events snapshot ERROR:", err.code, err.message);
-        setLoadingEvents(false);
-      }
+      () => setLoadingEvents(false)
     );
 
     const unsubSeries = subscribeOwnerSeries(user.uid, (list) => {
-      console.log("[v0] series snapshot size:", list.length);
       setSeries(list);
       setLoadingSeries(false);
     });
