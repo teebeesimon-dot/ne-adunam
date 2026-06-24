@@ -1,5 +1,16 @@
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "./firebase";
 import type { Event, Sport } from "./types";
 import { mapFirestoreTeams } from "./teams";
+
+/**
+ * Deletes a single standalone event document. Attendance responses are left as
+ * harmless orphans on purpose: Firestore rules only let each user delete their
+ * own response, so the event owner cannot (and need not) remove them.
+ */
+export async function deleteEvent(eventId: string): Promise<void> {
+  await deleteDoc(doc(db, "events", eventId));
+}
 
 export function parseDate(value: unknown): string {
   if (typeof value === "string") return value;

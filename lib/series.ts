@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   deleteField,
   doc,
   getDoc,
@@ -324,4 +325,35 @@ export async function reopenSeries(seriesId: string): Promise<void> {
     status: "active",
     endDate: deleteField(),
   });
+}
+
+/**
+ * Permanently deletes a series and every occurrence (event) linked to it.
+ * The owner is allowed to delete all these docs (ownerId matches). Attendance
+ * responses are intentionally left as harmless orphans (rules only let each
+ * user delete their own response). Batched in chunks to stay under the 500-op
+ * limit.
+ */
+export async function deleteSeriesCompletely(
+  seriesId: string,
+  ownerId: string
+): Promise<void> {
+  const occurrences = await getDocs(
+    query(
+      collection(db, "events"),
+      where("ownerId", "==", ownerId),
+      where("seriesId", "==", seriesId)
+    )
+  );
+
+  const refs = occurrences.docs.map((d) => d.ref);
+  // Leave room for the series doc itself in the final batch.
+  const CHUNK = 400;
+  for (let i = 0; i < refs.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + CHUNK).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+
+  await deleteDoc(doc(db, "series", seriesId));
 }

@@ -4,6 +4,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AttendanceSection from "@/components/AttendanceSection";
+import DeleteEventButton from "@/components/DeleteEventButton";
 import OpenInGoogleMapsButton from "@/components/OpenInGoogleMapsButton";
 import SeriesPanel from "@/components/SeriesPanel";
 import ShareOnWhatsAppButton from "@/components/ShareOnWhatsAppButton";
@@ -186,6 +187,9 @@ export default function EventPageClient({ id }: EventPageClientProps) {
               >
                 Edit Event
               </Link>
+            )}
+            {user?.uid === event.ownerId && !event.seriesId && (
+              <DeleteEventButton eventId={event.id} className="w-full sm:w-auto" />
             )}
           </div>
           {copied && (
