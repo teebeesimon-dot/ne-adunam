@@ -312,7 +312,7 @@ export default function MembersGroup({
                         }
                         className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition disabled:opacity-60 ${
                           subscribed
-                            ? "bg-accent/20 text-accent-foreground"
+                            ? "bg-primary text-primary-foreground hover:bg-primary-hover"
                             : "border border-border bg-background text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -322,7 +322,7 @@ export default function MembersGroup({
                       <span
                         className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
                           subscribed
-                            ? "bg-accent/20 text-accent-foreground"
+                            ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -330,7 +330,7 @@ export default function MembersGroup({
                       </span>
                     )
                   ) : subscribed ? (
-                    <span className="shrink-0 rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent-foreground">
+                    <span className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
                       Abonament
                     </span>
                   ) : canManage ? (

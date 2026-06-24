@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthProvider";
 import { ROLE_LABELS } from "@/lib/roles";
 import { LogoMark } from "@/components/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function AuthButton() {
   const { user, profile, loading, isSuperAdmin, signInWithGoogle, signOutUser } =
@@ -91,7 +92,7 @@ function GoogleIcon() {
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-foreground"
@@ -99,7 +100,10 @@ export function AppHeader() {
           <LogoMark className="h-9 w-9" />
           Ne Adunam
         </Link>
-        <AuthButton />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <AuthButton />
+        </div>
       </div>
     </header>
   );

@@ -7,7 +7,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-full bg-background">
       <RequireSuperAdmin>
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <Link
             href="/"
             className="mb-6 inline-flex items-center text-sm font-medium text-primary transition hover:text-primary-hover"

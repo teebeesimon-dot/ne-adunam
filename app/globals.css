@@ -57,28 +57,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #07100d;
-    --foreground: #e7f0ec;
-    --card: #0f1714;
-    --card-foreground: #e7f0ec;
-    --muted: #16201c;
-    --muted-foreground: #93a39b;
-    --border: #20302a;
-    --input: #20302a;
-    --ring: #10b981;
+.dark {
+  --background: #07100d;
+  --foreground: #e7f0ec;
+  --card: #0f1714;
+  --card-foreground: #e7f0ec;
+  --muted: #16201c;
+  --muted-foreground: #93a39b;
+  --border: #20302a;
+  --input: #20302a;
+  --ring: #10b981;
 
-    --primary: #10b981;
-    --primary-hover: #34d399;
-    --primary-foreground: #04130d;
+  --primary: #10b981;
+  --primary-hover: #34d399;
+  --primary-foreground: #04130d;
 
-    --accent: #84cc16;
-    --accent-foreground: #0c1400;
+  --accent: #84cc16;
+  --accent-foreground: #0c1400;
 
-    --destructive: #f87171;
-    --destructive-foreground: #1a0606;
-  }
+  --destructive: #f87171;
+  --destructive-foreground: #1a0606;
 }
 
 body {

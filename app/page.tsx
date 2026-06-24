@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="min-h-full bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
         <header className="mb-12 text-center sm:text-left">
           <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />

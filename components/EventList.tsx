@@ -140,7 +140,7 @@ export default function EventList() {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) =>
         item.kind === "series" ? (
           <EventCard
